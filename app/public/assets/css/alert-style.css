@@ -1,0 +1,94 @@
+/* alert-styles.css */
+:root {
+  --primary-color: #2b6cb0;
+  --primary-dark: #1e4e8c;
+  --error-color: #e53e3e;
+  --error-dark: #c53030;
+  --success-color: #38a169;
+  --success-dark: #2f855a;
+  --secondary-color: #ebf8ff;
+  --text-color: #2d3748;
+}
+
+.poultry-alert {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  width: 90%;
+  max-width: 420px;
+  padding: 40px 30px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  z-index: 1001;
+}
+
+.poultry-title {
+  color: var(--text-color);
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+  line-height: 1.2;
+}
+
+.poultry-text {
+  color: #4a5568;
+  font-size: 17px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  padding: 0 10px;
+}
+
+.poultry-confirm {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 14px 36px;
+  font-size: 16px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(43, 108, 176, 0.2);
+}
+
+.poultry-confirm:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(43, 108, 176, 0.3);
+}
+
+.poultry-cancel {
+  background: none;
+  border: none;
+  color: #718096;
+  margin-top: 15px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: color 0.3s;
+  text-decoration: underline;
+  padding: 5px;
+}
+
+.poultry-cancel:hover {
+  color: var(--text-color);
+}
+
+.poultry-badge {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  box-shadow: 0 4px 12px rgba(43, 108, 176, 0.3);
+}

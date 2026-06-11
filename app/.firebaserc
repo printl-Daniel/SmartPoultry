@@ -1,0 +1,10 @@
+{
+  "projects": {
+    "default": "poultry-d16aa",
+    "smart-poultry": "poultry-d16aa",
+    "smartpoultry": "poultry-d16aa",
+    "poultrySmart": "poultry-d16aa"
+  },
+  "targets": {},
+  "etags": {}
+}
