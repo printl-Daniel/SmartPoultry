@@ -1,13 +1,8 @@
-const admin = require("firebase-admin");
-const serviceAccount = require("./config/serviceAccountKey.json");
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+const admin = require("./firebase");
+require("dotenv").config();
 
 const message = {
-  token:
-    "fnc0a14tcsjbryQVyoHgdI:APA91bGjs3HdlA4cNy-XAusLrmfzJwUvIJMYCGbwTZPb2HV2efSdnwoWPaYFdjWiSliRHYBNRIrkquDROQb0jCTg5okr0sO8nVMuAd4DWn6NxJTiRvqCfq0", // Your device token here
+  token: process.env.FCM_DEVICE_TOKEN,
   notification: {
     title: "Test Notification",
     body: "This is a test notification from Firebase!",
