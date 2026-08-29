@@ -13,6 +13,7 @@ import {
 // Import your alert utilities
 import { successAlert, errorAlert } from "./alertServices.js";
 import logs from "./logsServices.js";
+import email from "./emailServices.js";
 
 const accounts = {
   // ADD Account
@@ -23,7 +24,7 @@ const accounts = {
       // Check if email already exists
       const snapshot = await getDocs(accountsRef);
       const emailExists = snapshot.docs.some(
-        (docSnap) => docSnap.data().email === accountData.email
+        (docSnap) => docSnap.data().email === accountData.email,
       );
 
       if (emailExists) {
@@ -67,12 +68,11 @@ const accounts = {
         footerNote: "Smart Poultry App — Automated System Notification",
       };
 
-      await fetch("https://email-poultry-backend.onrender.com/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(emailPayload),
+      await email.sendEmail(emailPayload.to, emailPayload.subject, {
+        title: emailPayload.title,
+        message: emailPayload.message,
+        text: emailPayload.text,
+        footerNote: emailPayload.footerNote,
       });
 
       await logs.recordLogs({
@@ -81,7 +81,7 @@ const accounts = {
       });
 
       successAlert(
-        `Account successfully added!\nTemp password sent to: ${accountData.email}`
+        `Account successfully added!\nTemp password sent to: ${accountData.email}`,
       );
     } catch (error) {
       errorAlert("Error adding account: " + error.message);

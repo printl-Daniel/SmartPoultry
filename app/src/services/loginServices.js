@@ -16,6 +16,7 @@ import {
   infoAlert,
   confirmAlert,
 } from "./alertServices.js";
+import email from "./emailServices.js";
 
 // --- Utility Functions for User Info ---
 const getBrowserInfo = async () => {
@@ -124,20 +125,9 @@ async function hashPassword(password, salt) {
   return bufferToHex(hashBuffer);
 }
 
-async function sendEmail(to, subject, { title, message, text, footerNote }) {
+async function sendEmail(to, subject, payload) {
   try {
-    await fetch("https://email-poultry-backend.onrender.com/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        to,
-        subject,
-        title,
-        message,
-        text,
-        footerNote,
-      }),
-    });
+    await email.sendEmail(to, subject, payload);
   } catch (error) {
     console.error("📧 Failed to send email:", error);
   }
@@ -517,21 +507,13 @@ const loginService = {
         footerNote: "Smart Poultry App — Automated System Notification",
       };
 
-      // 6. Send email
-      const res = await fetch(
-        "https://email-poultry-backend.onrender.com/send",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(emailPayload),
-        },
-      );
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        errorAlert("❌ Email API error response: " + errorText);
-        throw new Error("Failed to send email.");
-      }
+      // 6. Send email via shared email service
+      await email.sendEmail(emailPayload.to, emailPayload.subject, {
+        title: emailPayload.title,
+        message: emailPayload.message,
+        text: emailPayload.text,
+        footerNote: emailPayload.footerNote,
+      });
 
       successAlert("✅ Temporary password sent to your email.");
     } catch (error) {

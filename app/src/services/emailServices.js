@@ -1,5 +1,5 @@
-const EMAIL_API_URL = import.meta.env.VITE_EMAIL_API_URL; // e.g. https://email-poultry-backend.vercel.app/send
-const EMAIL_API_KEY = import.meta.env.VITE_EMAIL_API_KEY; // same value as API_SECRET_KEY on the backend
+const EMAIL_API_URL = import.meta.env.VITE_EMAIL_API_URL; 
+const EMAIL_API_KEY = import.meta.env.VITE_EMAIL_API_KEY; 
 
 const email = {
   async sendEmail(to, subject, { title, message, text, footerNote }) {
@@ -28,7 +28,7 @@ const email = {
 
       return data;
     } catch (error) {
-      console.error("📧 Failed to send email:", error);
+      console.error("Failed to send email:", error);
       throw error;
     }
   },
