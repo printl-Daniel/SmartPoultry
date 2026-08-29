@@ -23,6 +23,15 @@
             :class="{ 'camera-active': isCameraActive }"
           ></video>
 
+          <!-- Canvas for drawing bounding boxes -->
+          <canvas
+            v-if="!capturedImage && isCameraActive"
+            ref="canvasElement"
+            class="bounding-box-canvas"
+            :width="videoWidth"
+            :height="videoHeight"
+          ></canvas>
+
           <!-- Captured Image (when image is captured) -->
           <img
             v-if="capturedImage"
@@ -37,6 +46,11 @@
             <div class="corner top-right"></div>
             <div class="corner bottom-left"></div>
             <div class="corner bottom-right"></div>
+
+            <!-- Detection Message -->
+            <div class="detection-message" v-if="detectionMessage">
+              {{ detectionMessage }}
+            </div>
 
             <!-- Positioning Instructions -->
             <div class="positioning-text" v-if="showGuide">
@@ -144,6 +158,21 @@
           >
             Estimate Weight
           </button>
+
+          <button
+            v-if="!isCameraActive && !capturedImage"
+            @click="triggerFileInput"
+            class="camera-button upload-button"
+          >
+            Upload Image
+          </button>
+          <input
+            type="file"
+            ref="fileInput"
+            accept="image/*"
+            @change="handleFileUpload"
+            style="display: none"
+          />
         </div>
 
         <!-- Poultry Instructions -->
@@ -165,8 +194,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import Nav from "@/components/templates/Nav.vue";
+import {
+  estimateWeight,
+  disposeModels,
+  detectPoultry,
+  loadModels,
+} from "@/services/weightEstimationServices";
+import * as tf from "@tensorflow/tfjs";
 
 // Refs for state management
 const videoElement = ref(null);
@@ -176,11 +212,110 @@ const cameraError = ref(null);
 const cameras = ref([]);
 const selectedCameraId = ref("");
 const showGuide = ref(true);
+const detectionMessage = ref("");
+const detectedBoxes = ref([]);
 let videoStream = null;
+let animationFrameId = null;
+const fileInput = ref(null);
+
+// Add a canvas ref for drawing bounding boxes
+const canvasElement = ref(null);
 
 // Toggle positioning guide
 const toggleGuide = () => {
   showGuide.value = !showGuide.value;
+};
+
+// Add these methods
+const triggerFileInput = () => {
+  fileInput.value.click();
+};
+
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    capturedImage.value = e.target.result;
+
+    // Clear the file input for future uploads
+    event.target.value = "";
+  };
+  reader.readAsDataURL(file);
+};
+
+// Run real-time detection
+const runRealTimeDetection = async () => {
+  if (!isCameraActive.value || !videoElement.value || capturedImage.value) {
+    cancelAnimationFrame(animationFrameId);
+    return;
+  }
+
+  try {
+    // Pass the video element directly
+    const boxes = await detectPoultry(videoElement.value);
+
+    detectedBoxes.value = boxes || [];
+    detectionMessage.value =
+      boxes?.length > 0
+        ? `${boxes.length} chicken(s) detected`
+        : "No chicken detected";
+
+    // Draw the bounding boxes immediately after detection
+    drawBoundingBoxes();
+  } catch (error) {
+    console.error("Detection error:", error);
+    detectionMessage.value = "Detection error";
+  }
+
+  // Continue the detection loop
+  animationFrameId = requestAnimationFrame(runRealTimeDetection);
+};
+
+// Update the drawBoundingBoxes function
+const drawBoundingBoxes = () => {
+  if (!videoElement.value || !canvasElement.value || !isCameraActive.value)
+    return;
+
+  const video = videoElement.value;
+  const canvas = canvasElement.value;
+  const ctx = canvas.getContext("2d");
+
+  // Set canvas dimensions to match video
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  // Clear canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw bounding boxes
+  detectedBoxes.value.forEach((box) => {
+    const width = box.right - box.left;
+    const height = box.bottom - box.top;
+
+    // Draw rectangle
+    ctx.strokeStyle = "#FF0000";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(box.left, box.top, width, height);
+
+    // Draw label background
+    ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+    const textWidth = ctx.measureText("Chicken").width;
+    ctx.fillRect(box.left, box.top - 20, textWidth + 10, 20);
+
+    // Draw label text
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "16px Arial";
+    ctx.fillText("Chicken", box.left + 5, box.top - 5);
+
+    // Draw confidence percentage
+    ctx.fillText(
+      `${(box.confidence * 100).toFixed(1)}%`,
+      box.left + 5,
+      box.top - 5 + 20
+    );
+  });
 };
 
 // Enumerate all available video input devices (cameras)
@@ -258,10 +393,13 @@ const getLabelForDevice = (device, index) => {
   return `Camera ${index + 1}`;
 };
 
+const videoWidth = ref(0);
+const videoHeight = ref(0);
 // Start the camera with the selected device
 const startCamera = async () => {
   try {
     cameraError.value = null;
+    detectionMessage.value = "Initializing...";
 
     // Get available cameras first if we don't have them
     if (cameras.value.length === 0) {
@@ -294,11 +432,20 @@ const startCamera = async () => {
     if (videoElement.value) {
       videoElement.value.srcObject = videoStream;
       isCameraActive.value = true;
+
+      // Wait for video to be ready
+      videoElement.value.onloadedmetadata = () => {
+        videoWidth.value = videoElement.value.videoWidth;
+        videoHeight.value = videoElement.value.videoHeight;
+        detectionMessage.value = "Detecting...";
+        runRealTimeDetection();
+      };
     }
   } catch (error) {
     console.error("Error accessing camera:", error);
     cameraError.value =
       "Unable to access camera. Please ensure you have granted camera permissions.";
+    detectionMessage.value = "";
   }
 };
 
@@ -333,7 +480,10 @@ const switchCamera = async () => {
 const capturePhoto = () => {
   if (!videoElement.value || !isCameraActive.value) return;
 
-  // Create canvas to capture the frame
+  // Stop real-time detection
+  cancelAnimationFrame(animationFrameId);
+
+  // Create canvas to capture the frame with bounding boxes
   const canvas = document.createElement("canvas");
   canvas.width = videoElement.value.videoWidth;
   canvas.height = videoElement.value.videoHeight;
@@ -341,6 +491,28 @@ const capturePhoto = () => {
   // Draw the current video frame to the canvas
   const ctx = canvas.getContext("2d");
   ctx.drawImage(videoElement.value, 0, 0, canvas.width, canvas.height);
+
+  // Draw bounding boxes on the captured image
+  const boxes = detectedBoxes.value;
+  boxes.forEach((box) => {
+    const width = box.right - box.left;
+    const height = box.bottom - box.top;
+
+    // Draw rectangle
+    ctx.strokeStyle = "#FF0000";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(box.left, box.top, width, height);
+
+    // Draw label background
+    ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+    const textWidth = ctx.measureText("Chicken").width;
+    ctx.fillRect(box.left, box.top - 20, textWidth + 10, 20);
+
+    // Draw label text
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "16px Arial";
+    ctx.fillText("Chicken", box.left + 5, box.top - 5);
+  });
 
   // Convert canvas to data URL (JPEG format)
   capturedImage.value = canvas.toDataURL("image/jpeg");
@@ -352,21 +524,60 @@ const capturePhoto = () => {
 // Retake photo - clear the captured image and restart camera
 const retakePhoto = () => {
   capturedImage.value = null;
+  detectedBoxes.value = [];
+  detectionMessage.value = "";
   startCamera();
 };
 
 // Use the captured photo (emit event for parent component)
-const usePhoto = () => {
-  // Emit an event with the captured image data and camera info
-  emit("photo-captured", {
-    imageData: capturedImage.value,
-    cameraId: selectedCameraId.value,
-    cameraLabel: cameras.value.find(
-      (c) => c.deviceId === selectedCameraId.value
-    )?.label,
-  });
+const usePhoto = async () => {
+  try {
+    const img = new Image();
+    img.src = capturedImage.value;
 
-  console.log("Photo ready for weight estimation");
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error("Failed to load captured image"));
+    });
+
+    // Check WebGL availability
+    if (tf.getBackend() !== "webgl") {
+      throw new Error(
+        "WebGL is not available. Please try another browser or device that supports WebGL."
+      );
+    }
+
+    cameraError.value = "Loading models and estimating weight...";
+
+    try {
+      await loadModels();
+      const estimatedWeight = await estimateWeight(img);
+      cameraError.value = null;
+      alert(`Estimated weight: ${estimatedWeight.toFixed(2)} grams`);
+    } catch (estimationError) {
+      cameraError.value = null;
+
+      // More specific error messages
+      if (
+        estimationError.message.includes("Failed to compile fragment shader")
+      ) {
+        alert(
+          "WebGL rendering error. Please try with a smaller image or different browser."
+        );
+      } else {
+        alert(
+          estimationError.message ||
+            "Failed to estimate weight. Please ensure you captured a clear image of poultry."
+        );
+      }
+
+      retakePhoto();
+    }
+  } catch (error) {
+    console.error("Error processing image:", error);
+    cameraError.value =
+      error.message || "Failed to process image. Please try again.";
+  }
 };
 
 // Stop the camera stream
@@ -382,6 +593,13 @@ const emit = defineEmits(["photo-captured"]);
 
 // Initialize component
 onMounted(async () => {
+  // Check WebGL support
+  if (tf.getBackend() !== "webgl") {
+    cameraError.value =
+      "WebGL is not supported in your browser. Please use a modern browser with WebGL support for better performance.";
+    console.warn("Current backend:", tf.getBackend());
+  }
+
   // Enumerate cameras on mount, but don't start automatically
   await getCameras();
 });
@@ -389,6 +607,8 @@ onMounted(async () => {
 // Clean up on component unmount
 onUnmounted(() => {
   stopCameraStream();
+  cancelAnimationFrame(animationFrameId);
+  disposeModels();
 });
 </script>
 
@@ -938,5 +1158,39 @@ onUnmounted(() => {
   .camera-selection {
     width: 100%;
   }
+}
+
+/* Add these new styles to your existing styles */
+
+.bounding-box-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.detection-message {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  max-width: 90%;
+}
+
+.upload-button {
+  background-color: #9f7aea;
+}
+
+.upload-button:hover {
+  background-color: #805ad5;
 }
 </style>

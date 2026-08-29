@@ -1,4 +1,13 @@
-import { db, collection, doc, getDoc, onSnapshot, updateDoc } from "./firebase";
+import {
+  db,
+  deleteField,
+  doc,
+  getDoc,
+  onSnapshot,
+  updateDoc,
+} from "./firebase";
+import { successAlert, confirmAlert, errorAlert } from "./alertServices";
+import logs from "./logsServices.js";
 
 const sensorsServices = {
   // GET Water Level
@@ -29,25 +38,27 @@ const sensorsServices = {
     );
   },
 
-  // GET Temperatures
   async getTemperatures() {
     try {
       const docSnap = await getDoc(
         doc(db, "poultry_DB", "environmental_monitoring")
       );
       if (docSnap.exists()) {
-        return {
-          temp1: docSnap.data().temp1 || 0,
-          temp2: docSnap.data().temp2 || 0,
-        };
+        const data = docSnap.data();
+        const temps = {};
+        Object.keys(data).forEach((key) => {
+          if (/^temp\d+$/.test(key)) {
+            temps[key] = parseFloat(data[key]) || 0;
+          }
+        });
+        return temps;
       } else {
         console.warn("No temperature data found.");
-        return { temp1: 0, temp2: 0 };
+        return {};
       }
     } catch (error) {
       console.error("Error fetching temperatures:", error);
-      fee;
-      return { temp1: 0, temp2: 0 };
+      return {};
     }
   },
 
@@ -56,39 +67,47 @@ const sensorsServices = {
     return onSnapshot(
       docRef,
       (docSnap) => {
-        const data = docSnap.exists()
-          ? {
-              temp1: docSnap.data().temp1 || 0,
-              temp2: docSnap.data().temp2 || 0,
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const temps = {};
+          Object.keys(data).forEach((key) => {
+            if (/^temp\d+$/.test(key)) {
+              temps[key] = parseFloat(data[key]) || 0;
             }
-          : { temp1: 0, temp2: 0 };
-        callback(data);
+          });
+          callback(temps);
+        } else {
+          callback({});
+        }
       },
       (error) => {
         console.error("Realtime temperature listener error:", error);
-        callback({ temp1: 0, temp2: 0 }); // Default value on error
+        callback({});
       }
     );
   },
 
-  // GET Humidity
   async getHumidity() {
     try {
       const docSnap = await getDoc(
         doc(db, "poultry_DB", "environmental_monitoring")
       );
       if (docSnap.exists()) {
-        return {
-          hum1: docSnap.data().hum1 || 0,
-          hum2: docSnap.data().hum2 || 0,
-        };
+        const data = docSnap.data();
+        const hums = {};
+        Object.keys(data).forEach((key) => {
+          if (/^hum\d+$/.test(key)) {
+            hums[key] = parseFloat(data[key]) || 0;
+          }
+        });
+        return hums;
       } else {
         console.warn("No humidity data found.");
-        return { hum1: 0, hum2: 0 };
+        return {};
       }
     } catch (error) {
       console.error("Error fetching humidity:", error);
-      return { hum1: 0, hum2: 0 };
+      return {};
     }
   },
 
@@ -97,42 +116,51 @@ const sensorsServices = {
     return onSnapshot(
       docRef,
       (docSnap) => {
-        const data = docSnap.exists()
-          ? {
-              hum1: docSnap.data().hum1 || 0,
-              hum2: docSnap.data().hum2 || 0,
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const hums = {};
+          Object.keys(data).forEach((key) => {
+            if (/^hum\d+$/.test(key)) {
+              hums[key] = parseFloat(data[key]) || 0;
             }
-          : { hum1: 0, hum2: 0 };
-        callback(data);
+          });
+          callback(hums);
+        } else {
+          callback({});
+        }
       },
       (error) => {
         console.error("Realtime humidity listener error:", error);
-        callback({ hum1: 0, hum2: 0 }); // Default value on error
+        callback({});
       }
     );
   },
 
-  // GET Air Quality
   async getAirQuality() {
     try {
       const docRef = doc(db, "poultry_DB", "environmental_monitoring");
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
         console.warn("No air quality data found.");
-        return { mq135_1: "Error", mq135_2: "Error" };
+        return {};
       }
+
       const data = docSnap.data();
-      return {
-        mq135_1: data?.mq135_1 ?? "Sensor Error",
-        mq135_2: data?.mq135_2 ?? "Sensor Error",
-      };
+      const air = {};
+
+      Object.keys(data).forEach((key) => {
+        if (/^air\d+$/.test(key)) {
+          air[key] = parseFloat(data[key]) || "Sensor Error";
+        }
+      });
+
+      return air;
     } catch (error) {
       console.error("Error fetching air quality:", error);
-      return { mq135_1: "Error", mq135_2: "Error" };
+      return {};
     }
   },
 
-  // LISTEN for Air Quality Changes
   listenForAirQuality(callback) {
     const docRef = doc(db, "poultry_DB", "environmental_monitoring");
 
@@ -140,20 +168,77 @@ const sensorsServices = {
       docRef,
       (docSnap) => {
         if (!docSnap.exists()) {
-          callback({ mq135_1: "Error", mq135_2: "Error" });
+          callback({});
           return;
         }
+
         const data = docSnap.data();
-        callback({
-          mq135_1: data?.mq135_1 ?? "Sensor Error",
-          mq135_2: data?.mq135_2 ?? "Sensor Error",
+        const air = {};
+
+        Object.keys(data).forEach((key) => {
+          if (/^air\d+$/.test(key)) {
+            air[key] = parseFloat(data[key]) || "Sensor Error";
+          }
         });
+
+        callback(air);
       },
       (error) => {
         console.error("Realtime air quality listener error:", error);
-        callback({ mq135_1: "Error", mq135_2: "Error" }); // Default value on error
+        callback({});
       }
     );
+  },
+
+  async deleteSensor(displayName) {
+    let sensorKeys = [];
+
+    if (displayName.includes("Temperature Sensor")) {
+      const number = displayName.replace(/\D/g, "");
+      sensorKeys = [`temp${number}`, `hum${number}`]; // Delete both temp and hum with same number
+    } else if (displayName.includes("Air Quality Sensor")) {
+      const number = displayName.replace(/\D/g, "");
+      sensorKeys = [`air${number}`];
+    } else {
+      errorAlert("Error!", "Unknown sensor type.");
+      return false;
+    }
+
+    const result = await confirmAlert(
+      "Delete Sensor?",
+      `Are you sure you want to permanently remove "${displayName}"? This action cannot be undone.`,
+      "Yes, delete it",
+      "Cancel",
+      {
+        icon: "warning",
+        confirmButtonColor: "#d33",
+      }
+    );
+
+    if (!result.isConfirmed) return false;
+
+    try {
+      const docRef = doc(db, "poultry_DB", "environmental_monitoring");
+
+      // Construct update object
+      const updates = {};
+      sensorKeys.forEach((key) => {
+        updates[key] = deleteField();
+      });
+
+      await updateDoc(docRef, updates);
+
+      await logs.recordLogs({
+        action: "DELETE",
+        description: `"${displayName}" and related sensors removed from the system.`,
+      });
+
+      successAlert("Deleted!", `"${displayName}" has been removed.`);
+      return true;
+    } catch (error) {
+      errorAlert("Error!", `Failed to delete sensor: ${error.message}`);
+      return false;
+    }
   },
 };
 

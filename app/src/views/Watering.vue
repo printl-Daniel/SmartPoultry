@@ -1,397 +1,437 @@
+\
 <template>
-  <div class="bg-gray-100 min-h-screen">
+  <div class="bg-gray-50 min-h-screen">
     <div class="flex h-screen overflow-hidden">
       <!-- Sidebar -->
       <Nav />
-      <!-- Main Content -->
-      <main class="flex-1 overflow-y-auto p-6 md:p-8 pt-20 md:pt-8">
-        <!-- System Status -->
-        <div
-          class="bg-white rounded-xl shadow-md p-6 mb-8 transform hover:translate-y-[-5px] transition-all duration-300"
-        >
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div
-              class="status-card"
-              v-for="(status, index) in systemStatus"
-              :key="index"
-            >
-              <div
-                class="w-10 h-10 rounded-lg flex items-center justify-center"
-                :class="status.bgClass"
-              >
-                <i :class="[status.icon, status.iconClass]"></i>
-              </div>
 
+      <!-- Main Content -->
+      <main class="flex-1 overflow-hidden flex flex-col">
+        <!-- Dashboard Header -->
+        <header class="bg-white border-b border-gray-200 shadow-sm">
+          <div
+            class="container mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+          >
+            <div class="flex items-center gap-4">
+              <div
+                class="bg-gradient-to-r from-blue-500 to-cyan-600 text-white p-3 rounded-xl shadow-md"
+              >
+                <i class="fas fa-tint text-2xl"></i>
+              </div>
               <div>
-                <p class="font-medium text-gray-800">{{ status.name }}</p>
-                <p :class="status.statusClass" class="text-sm font-medium">
-                  {{ status.status }}
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-900">
+                  Water Management System
+                </h1>
+                <p class="text-sm text-gray-600">
+                  Real-time monitoring and automated control
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Water Management Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <!-- Water Quantity -->
-          <div
-            class="bg-white rounded-xl shadow-md p-6 transform hover:translate-y-[-5px] transition-all duration-300"
-          >
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-lg font-semibold text-gray-800">
-                Main Container Water Quantity
-              </h2>
-              <span
-                :class="getWaterStatusClass(waterQuantity)"
-                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-              >
-                <i class="fas fa-check-circle mr-1"></i>
-                {{ getWaterStatus(waterQuantity) }}
-              </span>
+            <div
+              class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg shadow-sm border border-blue-100 flex items-center gap-2"
+            >
+              <i class="fas fa-broadcast-tower text-sm"></i>
+              <span class="font-medium text-sm">Live Data</span>
             </div>
+          </div>
+        </header>
 
-            <div class="relative w-full h-48 mx-auto">
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          <!-- Section Title -->
+          <div class="flex items-center gap-3">
+            <i class="fas fa-cogs text-xl text-blue-500"></i>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900">
+              System Overview
+            </h2>
+          </div>
+
+          <!-- System Status
+          <div
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6"
+          >
+            <h3
+              class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2"
+            >
+              <i class="fas fa-shield-alt text-blue-500"></i>
+              System Status
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div
-                class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-44 bg-blue-50 border-2 border-blue-500 rounded-lg overflow-hidden"
+                class="status-card"
+                v-for="(status, index) in systemStatus"
+                :key="index"
               >
                 <div
-                  class="water"
-                  :style="{ height: waterQuantity + '%' }"
-                ></div>
-              </div>
-              <div
-                class="absolute top-2 left-1/2 transform -translate-x-1/2 bg-white px-3 py-1 rounded-full shadow-sm"
-              >
-                <span class="font-semibold">{{ waterQuantity }}%</span>
-              </div>
-              <div
-                class="absolute top-0 right-10 h-full flex flex-col justify-between py-2"
-              >
-                <div class="flex items-center">
-                  <div class="w-2 h-px bg-gray-400 mr-1"></div>
-                  <div class="text-xs text-gray-500">100%</div>
-                </div>
-                <div class="flex items-center">
-                  <div class="w-2 h-px bg-gray-400 mr-1"></div>
-                  <div class="text-xs text-gray-500">75%</div>
-                </div>
-                <div class="flex items-center">
-                  <div class="w-2 h-px bg-gray-400 mr-1"></div>
-                  <div class="text-xs text-gray-500">50%</div>
-                </div>
-                <div class="flex items-center">
-                  <div class="w-2 h-px bg-gray-400 mr-1"></div>
-                  <div class="text-xs text-gray-500">25%</div>
-                </div>
-                <div class="flex items-center">
-                  <div class="w-2 h-px bg-gray-400 mr-1"></div>
-                  <div class="text-xs text-gray-500">0%</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-6">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-sm text-gray-600">Current Capacity:</span>
-                <span class="font-medium text-gray-800"
-                  >{{ currentVolume }} Liters</span
+                  class="w-10 h-10 rounded-lg flex items-center justify-center"
+                  :class="status.bgClass"
                 >
-              </div>
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-sm text-gray-600">Total Capacity:</span>
-                <span class="font-medium text-gray-800"
-                  >{{ totalCapacity }} Liters</span
-                >
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600">Water Quality:</span>
-                <span class="font-medium text-gray-800">{{
-                  waterQuality
-                }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Water Cleaning -->
-          <div
-            class="bg-white rounded-xl shadow-md p-6 transform hover:translate-y-[-5px] transition-all duration-300"
-          >
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-lg font-semibold text-gray-800">
-                Water Tanks Cleaning
-              </h2>
-              <div class="flex items-center">
-                <i class="fas fa-calendar-alt text-teal-500 mr-2"></i>
-                <span class="text-sm font-medium text-gray-600">{{
-                  formatDate(nextCleaningDate)
-                }}</span>
-              </div>
-            </div>
-
-            <div class="space-y-6">
-              <div>
-                <div class="flex justify-between items-center mb-2">
-                  <span class="font-medium text-gray-700"
-                    >Cleaning Schedule Progress</span
-                  >
-                  <span class="text-sm font-medium text-gray-600"
-                    >{{ daysUntilCleaning }} days remaining</span
-                  >
+                  <i :class="[status.icon, status.iconClass]"></i>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    class="bg-teal-500 h-2 rounded-full transition-all duration-500"
-                    :style="{ width: cleaningProgress + '%' }"
-                  ></div>
-                </div>
-              </div>
 
-              <div class="grid grid-cols-1 gap-4 pt-4">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                  <p class="text-sm text-gray-500 mb-1">Last Cleaning</p>
-                  <p class="font-medium text-gray-800">
-                    {{ formatDate(lastCleaningDate) }}
+                <div>
+                  <p class="font-medium text-gray-900">{{ status.name }}</p>
+                  <p :class="status.statusClass" class="text-sm font-medium">
+                    {{ status.status }}
                   </p>
                 </div>
               </div>
+            </div>
+          </div> -->
 
-              <!-- New Cleaning Schedule Adjuster -->
-              <div class="mt-4 bg-gray-50 p-4 rounded-lg">
-                <h3 class="text-sm font-medium text-gray-700 mb-3">
-                  Adjust Cleaning Schedule
+          <!-- Water Management Row -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Water Quantity -->
+            <div
+              class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow duration-300"
+            >
+              <div class="flex justify-between items-center mb-6">
+                <h3
+                  class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                >
+                  <i class="fas fa-water text-blue-500"></i>
+                  Main Container Water Quantity
                 </h3>
+                <span
+                  :class="getWaterStatusClass(waterQuantity)"
+                  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                >
+                  <i class="fas fa-check-circle mr-1"></i>
+                  {{ getWaterStatus(waterQuantity) }}
+                </span>
+              </div>
 
-                <div class="space-y-3">
-                  <div>
-                    <label class="text-sm text-gray-600 block mb-1"
-                      >Next Cleaning Date</label
-                    >
-                    <input
-                      type="date"
-                      v-model="nextCleaningDate"
-                      class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
+              <div class="relative w-full h-48 mx-auto mb-6">
+                <div
+                  class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-44 bg-blue-50 border-2 border-blue-500 rounded-lg overflow-hidden"
+                >
+                  <div
+                    class="water absolute bottom-0 left-0 w-full transition-all duration-1000 ease-out"
+                    :style="{ height: waterQuantity + '%' }"
+                  ></div>
+                </div>
+
+                <!-- Percentage Display -->
+                <div
+                  class="absolute top-2 left-1/2 transform -translate-x-1/2 bg-white px-3 py-1 rounded-full shadow-sm border"
+                >
+                  <span class="font-semibold text-gray-900"
+                    >{{ waterQuantity }}%</span
+                  >
+                </div>
+
+                <!-- Scale Markers -->
+                <div
+                  class="absolute top-0 right-8 h-full flex flex-col justify-between py-2 text-xs text-gray-500"
+                >
+                  <div class="flex items-center">
+                    <div class="w-2 h-px bg-gray-400 mr-1"></div>
+                    <span>100%</span>
                   </div>
-
-                  <div>
-                    <label class="text-sm text-gray-600 block mb-1"
-                      >Cleaning Time</label
-                    >
-                    <input
-                      type="time"
-                      v-model="cleaningTime"
-                      class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
+                  <div class="flex items-center">
+                    <div class="w-2 h-px bg-gray-400 mr-1"></div>
+                    <span>75%</span>
+                  </div>
+                  <div class="flex items-center">
+                    <div class="w-2 h-px bg-gray-400 mr-1"></div>
+                    <span>50%</span>
+                  </div>
+                  <div class="flex items-center">
+                    <div class="w-2 h-px bg-gray-400 mr-1"></div>
+                    <span>25%</span>
+                  </div>
+                  <div class="flex items-center">
+                    <div class="w-2 h-px bg-gray-400 mr-1"></div>
+                    <span>0%</span>
                   </div>
                 </div>
-                <button
-                  @click="updateCleaningSchedule"
-                  class="w-full bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center justify-center mt-4 transition-colors duration-200 mb-5"
+              </div>
+
+              <!-- Container Details -->
+              <div class="space-y-3 pt-10">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 flex items-center gap-1">
+                    <i class="fas fa-tachometer-alt text-sm"></i>
+                    Current Capacity:
+                  </span>
+                  <span class="text-sm text-slate-500">
+                    ({{ Math.round((waterQuantity / 100) * 80) }}L / 80L)
+                  </span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 flex items-center gap-1">
+                    <i class="fas fa-database text-sm"></i>
+                    Total Capacity:
+                  </span>
+                  <span class="font-medium text-gray-900"
+                    >{{ totalCapacity }} Liters</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Water Cleaning -->
+            <div
+              class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow duration-300"
+            >
+              <div class="flex justify-between items-center mb-6">
+                <h3
+                  class="text-lg font-semibold text-gray-900 flex items-center gap-2"
                 >
-                  <i class="fas fa-save mr-2"></i> Update Schedule
-                </button>
+                  <i class="fas fa-broom text-teal-500"></i>
+                  Water Tanks Cleaning
+                </h3>
+                <div class="flex items-center">
+                  <i class="fas fa-calendar-alt text-teal-500 mr-2"></i>
+                  <span class="text-sm font-medium text-gray-600">{{
+                    formatDate(nextCleaningDate)
+                  }}</span>
+                </div>
+              </div>
+
+              <div class="space-y-6">
+                <div>
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-medium text-gray-700"
+                      >Cleaning Schedule Progress</span
+                    >
+                    <span class="text-sm font-medium text-gray-600"
+                      >{{ daysUntilCleaning }} days remaining</span
+                    >
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      class="bg-teal-500 h-2 rounded-full transition-all duration-500"
+                      :style="{ width: cleaningProgress + '%' }"
+                    ></div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 pt-4">
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-500 mb-1">Last Cleaning</p>
+                    <p class="font-medium text-gray-900">
+                      {{ formatDate(lastCleaningDate) }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Cleaning Schedule Adjuster -->
+                <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-sm font-medium text-gray-700 mb-3">
+                    Adjust Cleaning Schedule
+                  </h4>
+
+                  <div class="space-y-3">
+                    <div>
+                      <label
+                        class="text-sm text-gray-600 block mb-1 flex items-center gap-1"
+                      >
+                        <i class="fas fa-calendar text-sm"></i>
+                        Next Cleaning Date
+                      </label>
+                      <input
+                        type="date"
+                        v-model="nextCleaningDate"
+                        class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        class="text-sm text-gray-600 block mb-1 flex items-center gap-1"
+                      >
+                        <i class="fas fa-clock text-sm"></i>
+                        Cleaning Time
+                      </label>
+                      <input
+                        type="time"
+                        v-model="cleaningTime"
+                        class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    @click="updateCleaningSchedule"
+                    class="w-full bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center justify-center mt-4 transition-colors duration-200 font-medium"
+                  >
+                    <i class="fas fa-save mr-2"></i> Update Schedule
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Watering Schedule -->
-        <div
-          class="bg-white rounded-xl shadow-md p-6 transform hover:translate-y-[-5px] transition-all duration-300"
-        >
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-lg font-semibold text-gray-800">
-              Watering Schedule
-            </h2>
-            <div class="flex items-center space-x-2">
-              <span
-                :class="
-                  wateringStatus === 'Active'
-                    ? 'text-teal-600'
-                    : 'text-gray-500'
-                "
-                class="text-sm font-medium"
-                >{{ wateringStatus }}</span
-              >
-              <label class="relative inline-block w-12 h-6">
-                <input
-                  type="checkbox"
-                  :checked="wateringStatus === 'Active'"
-                  @change="toggleWateringStatus"
-                  class="opacity-0 w-0 h-0"
-                />
-                <span
-                  class="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 transition-all duration-300 rounded-full before:absolute before:h-5 before:w-5 before:left-0.5 before:bottom-0.5 before:bg-white before:rounded-full before:transition-all before:duration-300"
-                  :class="
-                    wateringStatus === 'Active'
-                      ? 'bg-teal-600 before:translate-x-6'
-                      : ''
-                  "
-                ></span>
-              </label>
-            </div>
-          </div>
-
-          <div id="schedule-view" v-if="!isEditingSchedule">
+          <!-- Watering Schedule -->
+          <div
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6"
+          >
             <div
-              v-if="wateringSchedule.length === 0"
-              class="text-center py-8 text-gray-500"
+              class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6"
             >
-              <i class="fas fa-calendar-alt text-teal-400 text-4xl mb-3"></i>
-              <p>No watering schedules set</p>
-              <p class="text-sm mt-1">
-                Click the button below to add your first schedule
-              </p>
+              <h3
+                class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+              >
+                <i class="fas fa-calendar-alt text-teal-500"></i>
+                Watering Schedule
+              </h3>
             </div>
 
-            <ul v-else class="space-y-3">
-              <li
-                class="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
+            <!-- Schedule View -->
+            <div v-if="!isEditingSchedule">
+              <div
+                v-if="wateringSchedule.length === 0"
+                class="text-center py-12 text-gray-500"
+              >
+                <i class="fas fa-calendar-alt text-4xl text-gray-400 mb-4"></i>
+                <p class="text-lg font-medium">No watering schedules set</p>
+                <p class="text-sm mt-1">
+                  Click the button below to add your first schedule
+                </p>
+              </div>
+
+              <div v-else class="space-y-3">
+                <div
+                  class="flex items-center justify-between bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors"
+                  v-for="(schedule, index) in wateringSchedule"
+                  :key="index"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      :class="getIconClass(schedule.rawTime)"
+                      class="w-10 h-10 rounded-full flex items-center justify-center"
+                    >
+                      <i
+                        :class="getIcon(schedule.rawTime)"
+                        class="text-gray-700"
+                      ></i>
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900">
+                        {{ getTimeName(schedule.rawTime) }}
+                      </p>
+                      <div
+                        class="flex flex-wrap items-center text-xs text-gray-500 gap-2"
+                      >
+                        <span class="flex items-center gap-1">
+                          <i class="fas fa-cog text-xs"></i>
+                          {{ schedule.mode }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="font-semibold text-gray-900 text-lg">{{
+                    schedule.timeSlot
+                  }}</span>
+                </div>
+              </div>
+
+              <button
+                @click="editSchedule"
+                class="w-full mt-6 bg-teal-600 hover:bg-teal-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-colors duration-200 font-medium"
+              >
+                <i class="fas fa-edit mr-2"></i>
+                Edit Schedules
+              </button>
+            </div>
+
+            <!-- Schedule Editing -->
+            <div v-if="isEditingSchedule" class="space-y-4">
+              <div
+                v-if="wateringSchedule.length === 0"
+                class="text-center py-8 text-gray-500"
+              >
+                <p>No schedules yet. Add your first watering schedule below.</p>
+              </div>
+
+              <div
                 v-for="(schedule, index) in wateringSchedule"
                 :key="index"
+                class="bg-gray-50 p-4 rounded-lg relative border border-gray-200"
               >
-                <div class="flex items-center">
+                <button
+                  @click="removeSchedule(index)"
+                  class="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition-colors p-1"
+                  title="Remove schedule"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+
+                <div class="flex items-center mb-4 gap-2">
                   <div
                     :class="getIconClass(schedule.rawTime)"
-                    class="w-10 h-10 rounded-full flex items-center justify-center mr-3"
+                    class="w-8 h-8 rounded-full flex items-center justify-center"
                   >
                     <i
                       :class="getIcon(schedule.rawTime)"
                       class="text-gray-700"
                     ></i>
                   </div>
+                  <span class="font-medium text-gray-900">{{
+                    getTimeName(schedule.rawTime)
+                  }}</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <p class="font-medium text-gray-800">
-                      {{ getTimeName(schedule.rawTime) }}
-                    </p>
-                    <div
-                      class="flex items-center text-xs text-gray-500 space-x-2"
+                    <label
+                      class="text-sm font-medium text-gray-700 block mb-2 flex items-center gap-1"
                     >
-                      <span>Mode: {{ schedule.mode }}</span>
-                      <span>|</span>
-                      <span>Location: {{ schedule.location }}</span>
-                    </div>
+                      <i class="fas fa-clock text-sm"></i>
+                      Time
+                    </label>
+                    <input
+                      type="time"
+                      v-model="schedule.rawTime"
+                      class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      class="text-sm font-medium text-gray-700 block mb-2 flex items-center gap-1"
+                    >
+                      <i class="fas fa-cog text-sm"></i>
+                      Watering Mode
+                    </label>
+                    <select
+                      v-model="schedule.mode"
+                      class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    >
+                      <option>Refill mini tanks</option>
+                      <option>
+                        Refill mini tanks + Mix the water + Water the chickens
+                      </option>
+                      <option>Refill mini tanks + Mix the water</option>
+                      <option>Mix the water + Water the chickens</option>
+                      <option>Water the chickens</option>
+                      <option>Refill mini tanks</option>
+                      <option>Dispense</option>
+                    </select>
                   </div>
                 </div>
-                <span class="font-semibold text-gray-800">{{
-                  schedule.timeSlot
-                }}</span>
-              </li>
-            </ul>
+              </div>
 
-            <div class="mt-6 space-y-3">
               <button
-                @click="editSchedule"
-                class="w-full bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors duration-200"
+                @click="addNewSchedule"
+                class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-lg flex items-center justify-center transition-colors duration-200 border-2 border-dashed border-gray-300 font-medium"
               >
-                <i class="fas fa-edit mr-2"></i> Edit Schedules
-              </button>
-            </div>
-          </div>
-
-          <!-- Schedule Editing -->
-          <div v-if="isEditingSchedule" id="schedule-edit" class="space-y-4">
-            <div
-              v-if="wateringSchedule.length === 0"
-              class="text-center py-4 text-gray-500"
-            >
-              <p>No schedules yet. Add your first watering schedule below.</p>
-            </div>
-
-            <div
-              v-for="(schedule, index) in wateringSchedule"
-              :key="index"
-              class="bg-gray-50 p-4 rounded-lg relative"
-            >
-              <button
-                @click="removeSchedule(index)"
-                class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
-                title="Remove schedule"
-              >
-                <i class="fas fa-times"></i>
+                <i class="fas fa-plus mr-2"></i> Add New Watering Time
               </button>
 
-              <div class="flex items-center mb-3">
-                <div
-                  :class="getIconClass(schedule.rawTime)"
-                  class="w-8 h-8 rounded-full flex items-center justify-center mr-2"
+              <div class="flex flex-col sm:flex-row gap-3 mt-6">
+                <button
+                  @click="saveSchedule"
+                  class="flex-1 bg-teal-500 hover:bg-teal-600 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-colors duration-200 font-medium"
                 >
-                  <i
-                    :class="getIcon(schedule.rawTime)"
-                    class="text-gray-700"
-                  ></i>
-                </div>
-                <span class="font-medium text-gray-800">{{
-                  getTimeName(schedule.rawTime)
-                }}</span>
+                  <i class="fas fa-save mr-2"></i> Save Changes
+                </button>
+                <button
+                  @click="cancelSchedule"
+                  class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-colors duration-200 font-medium"
+                >
+                  <i class="fas fa-times mr-2"></i> Cancel
+                </button>
               </div>
-
-              <div class="space-y-3">
-                <div>
-                  <label class="text-sm text-gray-600 block mb-1">Time</label>
-                  <input
-                    type="time"
-                    v-model="schedule.rawTime"
-                    class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label class="text-sm text-gray-600 block mb-1"
-                    >Watering Mode</label
-                  >
-                  <select
-                    v-model="schedule.mode"
-                    class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  >
-                    <option>Refill mini tanks</option>
-                    <option>
-                      Refill mini tanks + Mix the water + Water the chicken
-                    </option>
-                    <option>Refill mini tanks + Mix the water</option>
-                    <option>Mix the water + Water the chickens</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="text-sm text-gray-600 block mb-1"
-                    >Location</label
-                  >
-                  <select
-                    v-model="schedule.location"
-                    class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  >
-                    <option>All Locations</option>
-                    <option>Coop 1</option>
-                    <option>Coop 2</option>
-                    <option>Coop 3</option>
-                    <option>Outdoor Area</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <button
-              @click="addNewSchedule"
-              class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-lg flex items-center justify-center transition-colors duration-200 border-2 border-dashed border-gray-300"
-            >
-              <i class="fas fa-plus mr-2"></i> Add New Watering Time
-            </button>
-
-            <div class="flex space-x-3 mt-6">
-              <button
-                @click="saveSchedule"
-                class="flex-1 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors duration-200"
-              >
-                <i class="fas fa-save mr-2"></i> Save
-              </button>
-              <button
-                @click="cancelSchedule"
-                class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors duration-200"
-              >
-                <i class="fas fa-times mr-2"></i> Cancel
-              </button>
             </div>
           </div>
         </div>
@@ -410,38 +450,36 @@ import wateringServices from "@/services/wateringServices.js";
 const mainPumpStatus = ref("Error");
 const mixerSystemStatus = ref("Error");
 
-const systemStatus = ref([
-  {
-    name: "Main Pump",
-    status: mainPumpStatus,
-    icon: "fas fa-pump-soap",
-    statusClass: "text-green-600",
-    bgClass: "bg-green-100",
-    iconClass: "text-green-500",
-  },
-  {
-    name: "Mixer System",
-    status: mixerSystemStatus,
-    icon: "fas fa-filter",
-    statusClass: "text-green-600",
-    bgClass: "bg-green-100",
-    iconClass: "text-green-500",
-  },
-  {
-    name: "Control System",
-    status: "Online",
-    icon: "fas fa-microchip",
-    statusClass: "text-green-600",
-    bgClass: "bg-green-100",
-    iconClass: "text-green-500",
-  },
-]);
+// const systemStatus = ref([
+//   {
+//     name: "Main Pump",
+//     status: mainPumpStatus,
+//     icon: "fas fa-pump-soap",
+//     statusClass: "text-emerald-600",
+//     bgClass: "bg-blue-100",
+//     iconClass: "text-blue-600",
+//   },
+//   {
+//     name: "Mixer System",
+//     status: mixerSystemStatus,
+//     icon: "fas fa-filter",
+//     statusClass: "text-emerald-600",
+//     bgClass: "bg-teal-100",
+//     iconClass: "text-teal-600",
+//   },
+//   {
+//     name: "Control System",
+//     status: "Online",
+//     icon: "fas fa-microchip",
+//     statusClass: "text-emerald-600",
+//     bgClass: "bg-emerald-100",
+//     iconClass: "text-emerald-600",
+//   },
+// ]);
 
 // Water Quantity
 const waterQuantity = ref(0);
-const currentVolume = ref(700); // Current volume of water in liters
-const totalCapacity = ref(1000); // Total tank capacity in liters
-const waterQuality = ref("Good"); // Water quality status
+const totalCapacity = ref(80); // Total tank capacity in liters
 
 // Water Cleaning
 const nextCleaningDate = ref("");
@@ -452,7 +490,7 @@ const daysUntilCleaning = ref(0); // Days remaining for next cleaning
 const cleaningTime = ref("");
 
 // Watering Schedule
-const wateringStatus = ref("Active");
+
 const wateringSchedule = ref([]);
 const isEditingSchedule = ref(false);
 
@@ -464,9 +502,9 @@ const getWaterStatus = (quantity) => {
 };
 
 const getWaterStatusClass = (quantity) => {
-  if (quantity < 20) return "bg-red-100 text-red-800";
-  if (quantity < 40) return "bg-yellow-100 text-yellow-800";
-  return "bg-green-100 text-green-800";
+  if (quantity < 20) return "bg-red-100 text-red-700 border-red-200";
+  if (quantity < 40) return "bg-yellow-100 text-yellow-700 border-yellow-200";
+  return "bg-emerald-100 text-emerald-700 border-emerald-200";
 };
 
 // Helper functions for schedule display
@@ -488,10 +526,10 @@ const getIcon = (time) => {
 
 const getIconClass = (time) => {
   const hour = parseInt(time.split(":")[0]);
-  if (hour >= 5 && hour < 12) return "bg-green-200";
-  if (hour >= 12 && hour < 17) return "bg-yellow-200";
-  if (hour >= 17 && hour < 21) return "bg-blue-200";
-  return "bg-indigo-200";
+  if (hour >= 5 && hour < 12) return "bg-yellow-100";
+  if (hour >= 12 && hour < 17) return "bg-orange-100";
+  if (hour >= 17 && hour < 21) return "bg-purple-100";
+  return "bg-indigo-100";
 };
 
 // Methods
@@ -557,10 +595,8 @@ const updateCleaningSchedule = async () => {
       lastCleaningDate: lastCleaningDate.value,
       cleaningTime: formattedCleaningTime, // Use directly from input
     });
-    alert("Cleaning schedule updated successfully!");
   } catch (error) {
     console.error("Failed to update cleaning schedule:", error);
-    alert("Error updating cleaning schedule.");
   }
 };
 
@@ -613,10 +649,8 @@ const saveSchedule = async () => {
 
   try {
     await wateringServices.saveSchedules(wateringSchedule.value);
-    alert("Watering schedule updated successfully!");
   } catch (error) {
     console.error("Failed to save watering schedule:", error);
-    alert("Error saving watering schedule.");
   }
 
   isEditingSchedule.value = false;
@@ -624,11 +658,6 @@ const saveSchedule = async () => {
 
 const cancelSchedule = () => {
   isEditingSchedule.value = false;
-};
-
-const toggleWateringStatus = () => {
-  wateringStatus.value =
-    wateringStatus.value === "Active" ? "Inactive" : "Active";
 };
 
 onMounted(async () => {
@@ -674,31 +703,15 @@ onMounted(async () => {
 
 <style scoped>
 .status-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #f9f9f9;
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.status-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  @apply flex items-center gap-3 bg-gray-50 p-4 rounded-lg border border-gray-100 hover:shadow-sm transition-all duration-200;
 }
 
 .water {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  transition: height 1s ease;
-  background-image: linear-gradient(
-    to bottom,
-    rgba(59, 130, 246, 0.7),
-    rgba(59, 130, 246, 0.9)
+  background: linear-gradient(
+    to top,
+    rgba(59, 130, 246, 0.7) 0%,
+    rgba(59, 130, 246, 0.9) 100%
   );
+  border-radius: 0 0 6px 6px;
 }
 </style>

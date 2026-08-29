@@ -1,417 +1,734 @@
 <template>
-  <div class="dashboard-container">
-    <!-- Navigation Sidebar -->
-    <Nav />
+  <div
+    class="flex h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100"
+  >
+    <div>
+      <Nav />
+    </div>
+
     <!-- Main Content -->
-    <div class="main-content">
-      <main class="content">
-        <div class="grid">
-          <!-- Water Consumption Card -->
-          <div class="card">
-            <div class="card-header">
-              <h2 class="card-title">Water Consumption</h2>
+    <main class="flex-1 overflow-hidden flex flex-col">
+      <!-- Reports Header -->
+      <header class="bg-white border-b border-slate-200 shadow-sm">
+        <div
+          class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0"
+        >
+          <div
+            class="flex items-center gap-4 w-full sm:w-auto justify-center sm:justify-start"
+          >
+            <div
+              class="bg-gradient-to-r from-purple-600 to-violet-700 text-white p-3 rounded-xl shadow-md flex-shrink-0"
+            >
+              <i class="fas fa-file-alt text-xl"></i>
             </div>
-            <div class="card-body">
-              <div class="metrics">
-                <div class="metric primary">
-                  <p class="metric-label">Today</p>
-                  <p class="metric-value">
-                    {{ waterConsumptionData.today }}
-                    {{ waterConsumptionData.unit }}
-                  </p>
-                </div>
-                <div class="metric">
-                  <p class="metric-label">Yesterday</p>
-                  <p class="metric-value">
-                    {{ waterConsumptionData.yesterday }}
-                    {{ waterConsumptionData.unit }}
-                  </p>
-                </div>
-                <div class="metric">
-                  <p class="metric-label">Week Avg</p>
-                  <p class="metric-value">
-                    {{ waterConsumptionData.weekAverage }}
-                    {{ waterConsumptionData.unit }}
-                  </p>
-                </div>
-              </div>
-
-              <div class="chart-wrapper">
-                <h3 class="chart-title">Weekly Consumption</h3>
-                <div class="chart">
-                  <canvas ref="waterWeeklyChart" height="200"></canvas>
-                </div>
-              </div>
+            <div>
+              <h1 class="text-xl font-bold text-slate-800">Reports</h1>
+              <p class="text-sm text-slate-500">
+                Comprehensive insights and data summaries
+              </p>
             </div>
           </div>
-
-          <!-- Feed Consumption Card -->
-          <div class="card">
-            <div class="card-header">
-              <h2 class="card-title">Feed Consumption</h2>
-            </div>
-            <div class="card-body">
-              <div class="metrics">
-                <div class="metric primary">
-                  <p class="metric-label">Today</p>
-                  <p class="metric-value">
-                    {{ feedConsumptionData.today }}
-                    {{ feedConsumptionData.unit }}
-                  </p>
-                </div>
-                <div class="metric">
-                  <p class="metric-label">Yesterday</p>
-                  <p class="metric-value">
-                    {{ feedConsumptionData.yesterday }}
-                    {{ feedConsumptionData.unit }}
-                  </p>
-                </div>
-                <div class="metric">
-                  <p class="metric-label">Week Avg</p>
-                  <p class="metric-value">
-                    {{ feedConsumptionData.weekAverage }}
-                    {{ feedConsumptionData.unit }}
-                  </p>
-                </div>
-              </div>
-
-              <div class="chart-wrapper">
-                <h3 class="chart-title">Weekly Consumption</h3>
-                <div class="chart">
-                  <canvas ref="feedWeeklyChart" height="200"></canvas>
-                </div>
-              </div>
-            </div>
+          <div
+            class="bg-violet-50 text-violet-700 px-4 py-2 rounded-lg shadow-sm border border-violet-100 flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end"
+          >
+            <i class="fas fa-chart-pie"></i>
+            <span class="font-medium">Analytics Dashboard</span>
           </div>
+        </div>
+      </header>
 
-          <!-- Temperature Alerts Card -->
-          <div class="card">
-            <div class="card-header">
-              <h2 class="card-title">Temperature Alerts</h2>
-            </div>
-            <div class="card-body">
-              <div class="tabs">
-                <div class="tabs-header">
-                  <button
-                    class="tab-btn"
-                    :class="{ active: tempActiveTab === 'day' }"
-                    @click="tempActiveTab = 'day'"
+      <!-- Main Dashboard Content -->
+      <div class="flex-1 overflow-auto bg-slate-50">
+        <div class="container mx-auto p-4 sm:p-6">
+          <!-- Water & Feed Consumption Row -->
+          <h2
+            class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"
+          >
+            <i class="fas fa-tint text-blue-500"></i>
+            Consumption Monitoring
+          </h2>
+
+          <div
+            class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8"
+          >
+            <!-- Water Consumption Card -->
+            <div
+              class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-slate-100 hover:shadow-xl transition-all duration-300"
+            >
+              <div
+                class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3 sm:gap-0"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center shadow-md"
                   >
-                    Today
-                  </button>
-                  <button
-                    class="tab-btn"
-                    :class="{ active: tempActiveTab === 'week' }"
-                    @click="tempActiveTab = 'week'"
-                  >
-                    This Week
-                  </button>
-                </div>
-                <div class="tab-content">
-                  <div v-if="tempActiveTab === 'day'">
-                    <div v-if="temperatureAlerts.day.length > 0" class="alerts">
-                      <div
-                        v-for="(alert, index) in temperatureAlerts.day"
-                        :key="index"
-                        class="alert-item"
-                      >
-                        <div class="alert-left">
-                          <div
-                            class="alert-icon"
-                            :class="
-                              alert.type === 'exceed' ? 'exceed' : 'below'
-                            "
-                          >
-                            <svg
-                              v-if="alert.type === 'exceed'"
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path d="m5 12 7-7 7 7"></path>
-                              <path d="M12 19V5"></path>
-                            </svg>
-                            <svg
-                              v-else
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path d="M12 5v14"></path>
-                              <path d="m19 12-7 7-7-7"></path>
-                            </svg>
-                          </div>
-                          <div class="alert-info">
-                            <p class="alert-title">
-                              {{ alert.type === "exceed" ? "Above" : "Below" }}
-                              threshold
-                            </p>
-                            <p class="alert-subtitle">{{ alert.time }}</p>
-                          </div>
-                        </div>
-                        <div class="alert-right">
-                          <p class="alert-value">{{ alert.value }}°C</p>
-                          <p class="alert-threshold">
-                            Threshold: {{ alert.threshold }}°C
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div v-else class="no-alerts">No alerts for today</div>
+                    <i class="fas fa-tint text-xl sm:text-2xl"></i>
                   </div>
-                  <div v-if="tempActiveTab === 'week'">
-                    <div
-                      v-if="temperatureAlerts.week.length > 0"
-                      class="alerts"
+                  <div>
+                    <h3 class="text-lg font-bold text-slate-800">
+                      Water Consumption
+                    </h3>
+                    <p class="text-sm text-slate-500">Today's usage</p>
+                  </div>
+                </div>
+                <div class="flex flex-col items-end">
+                  <div
+                    class="text-2xl sm:text-3xl font-bold text-slate-800 flex items-baseline gap-1"
+                  >
+                    {{ calculateAverage(waterConsumptionData) }}
+                    <span class="text-base sm:text-lg text-slate-600">{{
+                      waterConsumptionData.unit
+                    }}</span>
+                  </div>
+                  <div class="text-sm text-slate-500">Average</div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+                <div
+                  class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-blue-100"
+                >
+                  <div class="text-center">
+                    <span class="text-sm font-medium text-slate-700"
+                      >Today</span
                     >
-                      <div
-                        v-for="(alert, index) in temperatureAlerts.week"
-                        :key="index"
-                        class="alert-item"
+                    <p
+                      class="text-xl sm:text-2xl font-bold text-slate-800 mt-1"
+                    >
+                      {{ waterConsumptionData.today }}
+                    </p>
+                    <p class="text-xs text-slate-600">
+                      {{ waterConsumptionData.unit }}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-blue-100"
+                >
+                  <div class="text-center">
+                    <span class="text-sm font-medium text-slate-700"
+                      >Yesterday</span
+                    >
+                    <p
+                      class="text-xl sm:text-2xl font-bold text-slate-800 mt-1"
+                    >
+                      {{ waterConsumptionData.yesterday }}
+                    </p>
+                    <p class="text-xs text-slate-600">
+                      {{ waterConsumptionData.unit }}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-blue-100"
+                >
+                  <div class="text-center">
+                    <span class="text-sm font-medium text-slate-700"
+                      >Week Avg</span
+                    >
+                    <p
+                      class="text-xl sm:text-2xl font-bold text-slate-800 mt-1"
+                    >
+                      {{ waterConsumptionData.weekAverage }}
+                    </p>
+                    <p class="text-xs text-slate-600">
+                      {{ waterConsumptionData.unit }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-wrapper">
+                <h3 class="text-sm font-medium text-slate-700 mb-3">
+                  Weekly Consumption
+                </h3>
+                <div class="h-32 sm:h-40 bg-slate-50 rounded-lg">
+                  <canvas ref="waterWeeklyChart" class="w-full h-full"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feed Consumption Card -->
+            <div
+              class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-slate-100 hover:shadow-xl transition-all duration-300"
+            >
+              <div
+                class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3 sm:gap-0"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 text-white flex items-center justify-center shadow-md"
+                  >
+                    <i class="fas fa-seedling text-xl sm:text-2xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-bold text-slate-800">
+                      Feed Consumption
+                    </h3>
+                    <p class="text-sm text-slate-500">Container monitoring</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Container Tabs -->
+              <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+                <button
+                  v-for="container in feedContainers"
+                  :key="container.id"
+                  class="flex-shrink-0 px-3 py-2 text-sm border rounded-lg flex items-center gap-2 transition-colors"
+                  :class="{
+                    'bg-slate-100 border-slate-300 font-medium':
+                      activeContainer === container.id,
+                    'border-slate-200 hover:bg-slate-50':
+                      activeContainer !== container.id,
+                  }"
+                  @click="activeContainer = container.id"
+                >
+                  {{ container.name }}
+                  <span
+                    class="w-2 h-2 rounded-full"
+                    :class="getStatusClass(container.status)"
+                  ></span>
+                </button>
+              </div>
+
+              <!-- Container Content -->
+              <div
+                v-for="container in feedContainers"
+                :key="container.id"
+                v-show="activeContainer === container.id"
+              >
+                <div
+                  class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6"
+                >
+                  <div
+                    class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-green-100"
+                  >
+                    <div class="text-center">
+                      <span class="text-sm font-medium text-slate-700"
+                        >Today</span
                       >
-                        <div class="alert-left">
-                          <div
-                            class="alert-icon"
-                            :class="
-                              alert.type === 'exceed' ? 'exceed' : 'below'
-                            "
+                      <div class="flex items-center justify-center gap-1 mt-1">
+                        <p class="text-xl sm:text-2xl font-bold text-slate-800">
+                          {{ container.today }}
+                        </p>
+                        <div
+                          class="text-green-500"
+                          v-if="container.today > container.yesterday"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
                           >
-                            <svg
-                              v-if="alert.type === 'exceed'"
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path d="m5 12 7-7 7 7"></path>
-                              <path d="M12 19V5"></path>
-                            </svg>
-                            <svg
-                              v-else
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path d="M12 5v14"></path>
-                              <path d="m19 12-7 7-7-7"></path>
-                            </svg>
-                          </div>
-                          <div class="alert-info">
-                            <p class="alert-title">
-                              {{ alert.type === "exceed" ? "Above" : "Below" }}
-                              threshold
-                            </p>
-                            <p class="alert-subtitle">{{ alert.day }}</p>
-                          </div>
+                            <path d="m5 12 7-7 7 7"></path>
+                            <path d="M12 19V5"></path>
+                          </svg>
                         </div>
-                        <div class="alert-right">
-                          <p class="alert-value">{{ alert.value }}°C</p>
-                          <p class="alert-threshold">
-                            Threshold: {{ alert.threshold }}°C
-                          </p>
+                        <div class="text-red-500" v-else>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M12 5v14"></path>
+                            <path d="m19 12-7 7-7-7"></path>
+                          </svg>
                         </div>
                       </div>
+                      <p class="text-xs text-slate-600">{{ container.unit }}</p>
                     </div>
-                    <div v-else class="no-alerts">No alerts for this week</div>
+                  </div>
+                  <div
+                    class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-green-100"
+                  >
+                    <div class="text-center">
+                      <span class="text-sm font-medium text-slate-700"
+                        >Yesterday</span
+                      >
+                      <p
+                        class="text-xl sm:text-2xl font-bold text-slate-800 mt-1"
+                      >
+                        {{ container.yesterday }}
+                      </p>
+                      <p class="text-xs text-slate-600">{{ container.unit }}</p>
+                    </div>
+                  </div>
+                  <div
+                    class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-green-100"
+                  >
+                    <div class="text-center">
+                      <span class="text-sm font-medium text-slate-700"
+                        >Week Avg</span
+                      >
+                      <p
+                        class="text-xl sm:text-2xl font-bold text-slate-800 mt-1"
+                      >
+                        {{ container.weekAverage }}
+                      </p>
+                      <p class="text-xs text-slate-600">{{ container.unit }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="chart-wrapper">
+                  <h3 class="text-sm font-medium text-slate-700 mb-3">
+                    Weekly Consumption
+                  </h3>
+                  <div class="h-32 sm:h-40 bg-slate-50 rounded-lg">
+                    <canvas
+                      :ref="
+                        (el) => {
+                          if (el) containerCharts[container.id] = el;
+                        }
+                      "
+                      class="w-full h-full"
+                    ></canvas>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Humidity Alerts Card -->
-          <div class="card">
-            <div class="card-header">
-              <h2 class="card-title">Humidity Alerts</h2>
-            </div>
-            <div class="card-body">
-              <div class="tabs">
-                <div class="tabs-header">
-                  <button
-                    class="tab-btn"
-                    :class="{ active: humidityActiveTab === 'day' }"
-                    @click="humidityActiveTab = 'day'"
+          <!-- Environmental Alerts Section -->
+          <h2
+            class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2 mt-6 sm:mt-8"
+          >
+            <i class="fas fa-exclamation-triangle text-amber-500"></i>
+            Environmental Alerts
+          </h2>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <!-- Temperature Alerts -->
+            <div
+              class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-slate-100 hover:shadow-xl transition-all duration-300"
+            >
+              <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 text-white flex items-center justify-center shadow-md"
                   >
-                    Today
-                  </button>
-                  <button
-                    class="tab-btn"
-                    :class="{ active: humidityActiveTab === 'week' }"
-                    @click="humidityActiveTab = 'week'"
-                  >
-                    This Week
-                  </button>
-                </div>
-                <div class="tab-content">
-                  <div v-if="humidityActiveTab === 'day'">
-                    <div v-if="humidityAlerts.day.length > 0" class="alerts">
-                      <div
-                        v-for="(alert, index) in humidityAlerts.day"
-                        :key="index"
-                        class="alert-item"
-                      >
-                        <div class="alert-left">
-                          <div
-                            class="alert-icon"
-                            :class="
-                              alert.type === 'exceed' ? 'exceed' : 'below'
-                            "
-                          >
-                            <svg
-                              v-if="alert.type === 'exceed'"
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path d="m5 12 7-7 7 7"></path>
-                              <path d="M12 19V5"></path>
-                            </svg>
-                            <svg
-                              v-else
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path d="M12 5v14"></path>
-                              <path d="m19 12-7 7-7-7"></path>
-                            </svg>
-                          </div>
-                          <div class="alert-info">
-                            <p class="alert-title">
-                              {{ alert.type === "exceed" ? "Above" : "Below" }}
-                              threshold
-                            </p>
-                            <p class="alert-subtitle">{{ alert.time }}</p>
-                          </div>
-                        </div>
-                        <div class="alert-right">
-                          <p class="alert-value">{{ alert.value }}%</p>
-                          <p class="alert-threshold">
-                            Threshold: {{ alert.threshold }}%
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div v-else class="no-alerts">No alerts for today</div>
+                    <i class="fas fa-thermometer-half text-xl sm:text-2xl"></i>
                   </div>
-                  <div v-if="humidityActiveTab === 'week'">
-                    <div v-if="humidityAlerts.week.length > 0" class="alerts">
-                      <div
-                        v-for="(alert, index) in humidityAlerts.week"
-                        :key="index"
-                        class="alert-item"
-                      >
-                        <div class="alert-left">
-                          <div
-                            class="alert-icon"
-                            :class="
-                              alert.type === 'exceed' ? 'exceed' : 'below'
-                            "
+                  <h3 class="text-lg font-bold text-slate-800">
+                    Temperature Alerts
+                  </h3>
+                </div>
+              </div>
+
+              <!-- Tabs -->
+              <div class="flex gap-2 mb-4">
+                <button
+                  class="px-3 py-2 text-sm rounded-lg transition-colors"
+                  :class="{
+                    'bg-slate-100 font-medium': tempActiveTab === 'day',
+                    'hover:bg-slate-50': tempActiveTab !== 'day',
+                  }"
+                  @click="tempActiveTab = 'day'"
+                >
+                  Today
+                </button>
+                <button
+                  class="px-3 py-2 text-sm rounded-lg transition-colors"
+                  :class="{
+                    'bg-slate-100 font-medium': tempActiveTab === 'week',
+                    'hover:bg-slate-50': tempActiveTab !== 'week',
+                  }"
+                  @click="tempActiveTab = 'week'"
+                >
+                  This Week
+                </button>
+              </div>
+
+              <!-- Alert Content -->
+              <div class="min-h-[200px]">
+                <div v-if="tempActiveTab === 'day'">
+                  <div
+                    v-if="temperatureAlerts.day.length > 0"
+                    class="space-y-3"
+                  >
+                    <div
+                      v-for="(alert, index) in temperatureAlerts.day"
+                      :key="index"
+                      class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 border rounded-lg hover:shadow-sm transition-shadow gap-3 sm:gap-0"
+                    >
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-8 h-8 rounded-full flex items-center justify-center"
+                          :class="
+                            alert.type === 'exceed'
+                              ? 'bg-red-100 text-red-500'
+                              : 'bg-blue-100 text-blue-500'
+                          "
+                        >
+                          <svg
+                            v-if="alert.type === 'exceed'"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
                           >
-                            <svg
-                              v-if="alert.type === 'exceed'"
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path d="m5 12 7-7 7 7"></path>
-                              <path d="M12 19V5"></path>
-                            </svg>
-                            <svg
-                              v-else
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path d="M12 5v14"></path>
-                              <path d="m19 12-7 7-7-7"></path>
-                            </svg>
-                          </div>
-                          <div class="alert-info">
-                            <p class="alert-title">
-                              {{ alert.type === "exceed" ? "Above" : "Below" }}
-                              threshold
-                            </p>
-                            <p class="alert-subtitle">{{ alert.day }}</p>
-                          </div>
+                            <path d="m5 12 7-7 7 7"></path>
+                            <path d="M12 19V5"></path>
+                          </svg>
+                          <svg
+                            v-else
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M12 5v14"></path>
+                            <path d="m19 12-7 7-7-7"></path>
+                          </svg>
                         </div>
-                        <div class="alert-right">
-                          <p class="alert-value">{{ alert.value }}%</p>
-                          <p class="alert-threshold">
-                            Threshold: {{ alert.threshold }}%
+                        <div>
+                          <p class="font-medium">
+                            {{ alert.type === "exceed" ? "Above" : "Below" }}
+                            threshold
                           </p>
+                          <p class="text-sm text-slate-500">{{ alert.time }}</p>
                         </div>
                       </div>
+                      <div
+                        class="flex justify-between w-full sm:w-auto sm:text-right"
+                      >
+                        <p class="font-medium">{{ alert.value }}°C</p>
+                        <p class="text-sm text-slate-500 ml-4">
+                          Threshold: {{ alert.threshold }}°C
+                        </p>
+                      </div>
                     </div>
-                    <div v-else class="no-alerts">No alerts for this week</div>
+                  </div>
+                  <div
+                    v-else
+                    class="flex items-center justify-center h-32 bg-slate-50 rounded-lg text-slate-500 text-sm"
+                  >
+                    No alerts for today
+                  </div>
+                </div>
+                <div v-if="tempActiveTab === 'week'">
+                  <div
+                    v-if="temperatureAlerts.week.length > 0"
+                    class="space-y-3"
+                  >
+                    <div
+                      v-for="(alert, index) in temperatureAlerts.week"
+                      :key="index"
+                      class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 border rounded-lg hover:shadow-sm transition-shadow gap-3 sm:gap-0"
+                    >
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-8 h-8 rounded-full flex items-center justify-center"
+                          :class="
+                            alert.type === 'exceed'
+                              ? 'bg-red-100 text-red-500'
+                              : 'bg-blue-100 text-blue-500'
+                          "
+                        >
+                          <svg
+                            v-if="alert.type === 'exceed'"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="m5 12 7-7 7 7"></path>
+                            <path d="M12 19V5"></path>
+                          </svg>
+                          <svg
+                            v-else
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M12 5v14"></path>
+                            <path d="m19 12-7 7-7-7"></path>
+                          </svg>
+                        </div>
+                        <div>
+                          <p class="font-medium">
+                            {{ alert.type === "exceed" ? "Above" : "Below" }}
+                            threshold
+                          </p>
+                          <p class="text-sm text-slate-500">{{ alert.day }}</p>
+                        </div>
+                      </div>
+                      <div
+                        class="flex justify-between w-full sm:w-auto sm:text-right"
+                      >
+                        <p class="font-medium">{{ alert.value }}°C</p>
+                        <p class="text-sm text-slate-500 ml-4">
+                          Threshold: {{ alert.threshold }}°C
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    v-else
+                    class="flex items-center justify-center h-32 bg-slate-50 rounded-lg text-slate-500 text-sm"
+                  >
+                    No alerts for this week
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Humidity Alerts -->
+            <div
+              class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-slate-100 hover:shadow-xl transition-all duration-300"
+            >
+              <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center shadow-md"
+                  >
+                    <i class="fas fa-tint text-xl sm:text-2xl"></i>
+                  </div>
+                  <h3 class="text-lg font-bold text-slate-800">
+                    Humidity Alerts
+                  </h3>
+                </div>
+              </div>
+
+              <!-- Tabs -->
+              <div class="flex gap-2 mb-4">
+                <button
+                  class="px-3 py-2 text-sm rounded-lg transition-colors"
+                  :class="{
+                    'bg-slate-100 font-medium': humidityActiveTab === 'day',
+                    'hover:bg-slate-50': humidityActiveTab !== 'day',
+                  }"
+                  @click="humidityActiveTab = 'day'"
+                >
+                  Today
+                </button>
+                <button
+                  class="px-3 py-2 text-sm rounded-lg transition-colors"
+                  :class="{
+                    'bg-slate-100 font-medium': humidityActiveTab === 'week',
+                    'hover:bg-slate-50': humidityActiveTab !== 'week',
+                  }"
+                  @click="humidityActiveTab = 'week'"
+                >
+                  This Week
+                </button>
+              </div>
+
+              <!-- Alert Content -->
+              <div class="min-h-[200px]">
+                <div v-if="humidityActiveTab === 'day'">
+                  <div v-if="humidityAlerts.day.length > 0" class="space-y-3">
+                    <div
+                      v-for="(alert, index) in humidityAlerts.day"
+                      :key="index"
+                      class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 border rounded-lg hover:shadow-sm transition-shadow gap-3 sm:gap-0"
+                    >
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-8 h-8 rounded-full flex items-center justify-center"
+                          :class="
+                            alert.type === 'exceed'
+                              ? 'bg-red-100 text-red-500'
+                              : 'bg-blue-100 text-blue-500'
+                          "
+                        >
+                          <svg
+                            v-if="alert.type === 'exceed'"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="m5 12 7-7 7 7"></path>
+                            <path d="M12 19V5"></path>
+                          </svg>
+                          <svg
+                            v-else
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M12 5v14"></path>
+                            <path d="m19 12-7 7-7-7"></path>
+                          </svg>
+                        </div>
+                        <div>
+                          <p class="font-medium">
+                            {{ alert.type === "exceed" ? "Above" : "Below" }}
+                            threshold
+                          </p>
+                          <p class="text-sm text-slate-500">{{ alert.time }}</p>
+                        </div>
+                      </div>
+                      <div
+                        class="flex justify-between w-full sm:w-auto sm:text-right"
+                      >
+                        <p class="font-medium">{{ alert.value }}%</p>
+                        <p class="text-sm text-slate-500 ml-4">
+                          Threshold: {{ alert.threshold }}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    v-else
+                    class="flex items-center justify-center h-32 bg-slate-50 rounded-lg text-slate-500 text-sm"
+                  >
+                    No alerts for today
+                  </div>
+                </div>
+                <div v-if="humidityActiveTab === 'week'">
+                  <div v-if="humidityAlerts.week.length > 0" class="space-y-3">
+                    <div
+                      v-for="(alert, index) in humidityAlerts.week"
+                      :key="index"
+                      class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 border rounded-lg hover:shadow-sm transition-shadow gap-3 sm:gap-0"
+                    >
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-8 h-8 rounded-full flex items-center justify-center"
+                          :class="
+                            alert.type === 'exceed'
+                              ? 'bg-red-100 text-red-500'
+                              : 'bg-blue-100 text-blue-500'
+                          "
+                        >
+                          <svg
+                            v-if="alert.type === 'exceed'"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="m5 12 7-7 7 7"></path>
+                            <path d="M12 19V5"></path>
+                          </svg>
+                          <svg
+                            v-else
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M12 5v14"></path>
+                            <path d="m19 12-7 7-7-7"></path>
+                          </svg>
+                        </div>
+                        <div>
+                          <p class="font-medium">
+                            {{ alert.type === "exceed" ? "Above" : "Below" }}
+                            threshold
+                          </p>
+                          <p class="text-sm text-slate-500">{{ alert.day }}</p>
+                        </div>
+                      </div>
+                      <div
+                        class="flex justify-between w-full sm:w-auto sm:text-right"
+                      >
+                        <p class="font-medium">{{ alert.value }}%</p>
+                        <p class="text-sm text-slate-500 ml-4">
+                          Threshold: {{ alert.threshold }}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    v-else
+                    class="flex items-center justify-center h-32 bg-slate-50 rounded-lg text-slate-500 text-sm"
+                  >
+                    No alerts for this week
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch, onUnmounted } from "vue";
 import Chart from "chart.js/auto";
 import Nav from "@/components/templates/Nav.vue";
 import reportsServices from "@/services/reportServices.js";
 
-// Sidebar state
-const sidebarCollapsed = ref(false);
-const toggleSidebar = () => {
-  sidebarCollapsed.value = !sidebarCollapsed.value;
+// Mobile navigation state
+const isMobile = ref(false);
+const isMobileNavOpen = ref(false);
+
+const toggleMobileNav = () => {
+  isMobileNavOpen.value = !isMobileNavOpen.value;
+  if (isMobileNavOpen.value) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
+  }
+};
+
+// Check if mobile
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768;
+  if (!isMobile.value) {
+    isMobileNavOpen.value = false;
+    document.body.style.overflow = "";
+  }
 };
 
 const temperatureAlerts = ref({ day: [], week: [] });
@@ -423,68 +740,203 @@ const humidityActiveTab = ref("day");
 
 // Chart references
 const waterWeeklyChart = ref(null);
-const feedWeeklyChart = ref(null);
+const containerCharts = ref({});
 
 // Chart instances
 let waterWeeklyChartInstance = null;
-let feedWeeklyChartInstance = null;
+let containerChartInstances = {};
+
+// Feed container active state
+const activeContainer = ref(1);
 
 // Sample data
-const waterConsumptionData = {
-  today: 2150,
-  yesterday: 2100,
-  weekAverage: 2085,
+const waterConsumptionData = ref({
+  today: 0,
+  yesterday: 0,
+  weekAverage: 0,
   unit: "Liters",
-  weekly: [
-    { day: "Mon", value: 2085 * 0.95 },
-    { day: "Tue", value: 2085 * 1.02 },
-    { day: "Wed", value: 2085 * 0.98 },
-    { day: "Thu", value: 2085 * 1.05 },
-    { day: "Fri", value: 2085 * 1.01 },
-    { day: "Sat", value: 2100 },
-    { day: "Sun", value: 2150 },
-  ],
+  weekly: [], // ✅ make sure this is an array, not undefined
+});
+
+const feedContainers = ref([
+  {
+    id: 1,
+    name: "Container A",
+    today: 0,
+    yesterday: 0,
+    weekAverage: 0,
+    unit: "%",
+    status: "normal",
+    weekly: [
+      { day: "Mon", value: 0 },
+      { day: "Tue", value: 0 },
+      { day: "Wed", value: 0 },
+      { day: "Thu", value: 0 },
+      { day: "Fri", value: 0 },
+      { day: "Sat", value: 0 },
+      { day: "Sun", value: 0 },
+    ],
+    color: "#8b5cf6",
+  },
+  {
+    id: 2,
+    name: "Container B",
+    today: 0,
+    yesterday: 0,
+    weekAverage: 0,
+    unit: "kg",
+    status: "normal",
+    weekly: [
+      { day: "Mon", value: 0 },
+      { day: "Tue", value: 0 },
+      { day: "Wed", value: 0 },
+      { day: "Thu", value: 0 },
+      { day: "Fri", value: 0 },
+      { day: "Sat", value: 0 },
+      { day: "Sun", value: 0 },
+    ],
+    color: "#ef4444",
+  },
+  {
+    id: 3,
+    name: "Container C",
+    today: 0,
+    yesterday: 0,
+    weekAverage: 0,
+    unit: "kg",
+    status: "normal",
+    weekly: [
+      { day: "Mon", value: 0 },
+      { day: "Tue", value: 0 },
+      { day: "Wed", value: 0 },
+      { day: "Thu", value: 0 },
+      { day: "Fri", value: 0 },
+      { day: "Sat", value: 0 },
+      { day: "Sun", value: 0 },
+    ],
+    color: "#3b82f6",
+  },
+]);
+
+// Helper function to get status class
+const getStatusClass = (status) => {
+  switch (status) {
+    case "high":
+      return "bg-red-500";
+    case "low":
+      return "bg-blue-500";
+    default:
+      return "bg-green-500";
+  }
 };
 
-const feedConsumptionData = {
-  today: 450,
-  yesterday: 425,
-  weekAverage: 430,
-  unit: "kg",
-  weekly: [
-    { day: "Mon", value: 410 },
-    { day: "Tue", value: 425 },
-    { day: "Wed", value: 420 },
-    { day: "Thu", value: 440 },
-    { day: "Fri", value: 435 },
-    { day: "Sat", value: 425 },
-    { day: "Sun", value: 450 },
-  ],
-};
+function calculateAverage(values) {
+  if (!values || typeof values !== "object") {
+    console.error("Invalid input:", values);
+    return 0;
+  }
+
+  const nums = Object.values(values).map(function (v) {
+    return Number(v) || 0;
+  });
+
+  if (nums.length === 0) return 0;
+
+  return (
+    nums.reduce(function (a, b) {
+      return a + b;
+    }, 0) / nums.length
+  ).toFixed(1);
+}
 
 // Initialize charts
 const initializeCharts = () => {
-  // Destroy existing chart instances to prevent memory leaks
+  // ✅ FIXED: .value.weekly instead of .weekly
+  if (
+    !waterWeeklyChart.value ||
+    !Array.isArray(waterConsumptionData.value.weekly)
+  )
+    return;
+
+  const ctx = waterWeeklyChart.value.getContext("2d");
+
   if (waterWeeklyChartInstance) waterWeeklyChartInstance.destroy();
-  if (feedWeeklyChartInstance) feedWeeklyChartInstance.destroy();
 
-  // Initialize water weekly chart
-  if (waterWeeklyChart.value) {
-    const ctx = waterWeeklyChart.value.getContext("2d");
-    waterWeeklyChartInstance = new Chart(ctx, {
+  waterWeeklyChartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: waterConsumptionData.value.weekly.map((item) => item.day),
+      datasets: [
+        {
+          label: "Water Consumption (Liters)",
+          data: waterConsumptionData.value.weekly.map((item) => item.value),
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59, 130, 246, 0.1)",
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointBackgroundColor: "#3b82f6",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return `${Math.round(context.raw)} Liters`;
+            },
+          },
+        },
+        legend: {
+          display: false,
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: false,
+          grid: {
+            color: "rgba(0, 0, 0, 0.05)",
+          },
+        },
+        x: {
+          grid: {
+            display: false,
+          },
+        },
+      },
+    },
+  });
+  // Initialize container charts
+  feedContainers.value.forEach((container) => {
+    const chartElement = containerCharts.value[container.id];
+
+    if (!chartElement) return;
+
+    const ctx = chartElement.getContext("2d");
+
+    // Destroy previous instance if it exists
+    if (containerChartInstances[container.id]) {
+      containerChartInstances[container.id].destroy();
+    }
+
+    // Create new chart instance
+    containerChartInstances[container.id] = new Chart(ctx, {
       type: "line",
       data: {
-        labels: waterConsumptionData.weekly.map((item) => item.day),
+        labels: container.weekly.map((item) => item.day),
         datasets: [
           {
-            label: "Water Consumption (Liters)",
-            data: waterConsumptionData.weekly.map((item) => item.value),
-            borderColor: "#3b82f6",
-            backgroundColor: "rgba(59, 130, 246, 0.1)",
+            label: `${container.name} Feed Consumption (${container.unit})`,
+            data: container.weekly.map((item) => item.value),
+            borderColor: container.color,
+            backgroundColor: `${container.color}1a`, // ~10% opacity
             fill: true,
             tension: 0.4,
             borderWidth: 2,
-            pointBackgroundColor: "#3b82f6",
+            pointBackgroundColor: container.color,
           },
         ],
       },
@@ -495,7 +947,7 @@ const initializeCharts = () => {
           tooltip: {
             callbacks: {
               label: function (context) {
-                return `${Math.round(context.raw)} Liters`;
+                return `${context.raw} ${container.unit}`;
               },
             },
           },
@@ -505,7 +957,7 @@ const initializeCharts = () => {
         },
         scales: {
           y: {
-            beginAtZero: false,
+            beginAtZero: true,
             grid: {
               color: "rgba(0, 0, 0, 0.05)",
             },
@@ -518,346 +970,108 @@ const initializeCharts = () => {
         },
       },
     });
-  }
-
-  // Initialize feed weekly chart
-  if (feedWeeklyChart.value) {
-    const ctx = feedWeeklyChart.value.getContext("2d");
-    feedWeeklyChartInstance = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: feedConsumptionData.weekly.map((item) => item.day),
-        datasets: [
-          {
-            label: "Feed Consumption (kg)",
-            data: feedConsumptionData.weekly.map((item) => item.value),
-            borderColor: "#8b5cf6",
-            backgroundColor: "rgba(139, 92, 246, 0.1)",
-            fill: true,
-            tension: 0.4,
-            borderWidth: 2,
-            pointBackgroundColor: "#8b5cf6",
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return `${context.raw} kg`;
-              },
-            },
-          },
-          legend: {
-            display: false,
-          },
-        },
-        scales: {
-          y: {
-            beginAtZero: false,
-            grid: {
-              color: "rgba(0, 0, 0, 0.05)",
-            },
-          },
-          x: {
-            grid: {
-              display: false,
-            },
-          },
-        },
-      },
-    });
-  }
+  });
 };
 
-onMounted(() => {
+// Watch for container changes to reinitialize charts
+watch(activeContainer, () => {
+  setTimeout(() => {
+    initializeCharts();
+  }, 50);
+});
+
+// Watch for window resize to handle responsive charts
+const handleResize = () => {
+  checkMobile();
+  setTimeout(() => {
+    initializeCharts();
+  }, 100);
+};
+
+onMounted(async () => {
+  checkMobile();
+  window.addEventListener("resize", handleResize);
+
+  waterConsumptionData.value = await reportsServices.fetchWaterLevelLogs();
+  feedContainers.value = await reportsServices.fetchFeedLevelLogs();
+  console.log(feedContainers);
   initializeCharts();
-  reportsServices.fetchAlerts().then((result) => {
+
+  await reportsServices.fetchAlerts().then((result) => {
     temperatureAlerts.value.day = result.temperatureAlerts.day;
     temperatureAlerts.value.week = result.temperatureAlerts.week;
     humidityAlerts.value.day = result.humidityAlerts.day;
     humidityAlerts.value.week = result.humidityAlerts.week;
   });
 });
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+  document.body.style.overflow = "";
+});
 </script>
 
 <style scoped>
-/* Base styles */
-
-.dashboard-container {
-  display: flex;
-  min-height: 100vh;
-  background-color: #f5f7fa;
-  color: #334155;
+/* Custom scrollbar for mobile nav */
+::-webkit-scrollbar {
+  width: 4px;
 }
 
-/* Main content */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.header {
-  height: 64px;
-  display: flex;
-  align-items: center;
-  padding: 0 24px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.page-title {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.content {
-  flex: 1;
-  padding: 24px;
-  overflow: auto;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 500px), 1fr));
-  gap: 24px;
-}
-
-/* Card styles */
-.card {
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  transition: box-shadow 0.3s ease;
-}
-
-.card:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.card-body {
-  padding: 20px;
-}
-
-/* Metrics */
-.metrics {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 24px;
-}
-
-.metric {
-  text-align: left;
-}
-
-.metric-label {
-  font-size: 14px;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.metric-value {
-  font-size: 18px;
-  font-weight: 500;
-  color: #1e293b;
-}
-
-.metric.primary .metric-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-/* Chart styles */
-.chart-wrapper {
-  width: 100%;
-}
-
-.chart-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #64748b;
-  margin-bottom: 12px;
-}
-
-.chart {
-  position: relative;
-  height: 200px;
-}
-
-/* Tabs */
-.tabs {
-  width: 100%;
-}
-
-.tabs-header {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 8px;
-}
-
-.tab-btn {
-  padding: 8px 16px;
-  background: none;
-  border: none;
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
   border-radius: 4px;
-  font-size: 14px;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.tab-btn:hover {
-  background-color: #f1f5f9;
-  color: #334155;
+/* Smooth transitions */
+.transition-all {
+  transition: all 0.3s ease;
 }
 
-.tab-btn.active {
-  background-color: #f1f5f9;
-  color: #0f172a;
-  font-weight: 500;
+/* Chart container styling */
+canvas {
+  border-radius: 0.5rem;
 }
 
-.tab-content {
-  position: relative;
-  min-height: 200px;
+/* Container tabs scrolling */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
-/* Alerts */
-.alerts {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.overflow-x-auto::-webkit-scrollbar {
+  height: 4px;
 }
 
-.alert-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  transition: transform 0.2s, box-shadow 0.2s;
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.alert-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
 }
 
-.alert-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* Mobile-specific adjustments */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }
 
-.alert-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-}
-
-.alert-icon.exceed {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.alert-icon.below {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.alert-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.alert-title {
-  font-weight: 500;
-  color: #1e293b;
-}
-
-.alert-subtitle {
-  font-size: 14px;
-  color: #64748b;
-}
-
-.alert-right {
-  text-align: right;
-}
-
-.alert-value {
-  font-weight: 500;
-  color: #1e293b;
-}
-
-.alert-threshold {
-  font-size: 14px;
-  color: #64748b;
-}
-
-.no-alerts {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 120px;
-  color: #64748b;
-  font-size: 14px;
-  background-color: #f8fafc;
-  border-radius: 6px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
+/* Ensure proper spacing on very small screens */
+@media (max-width: 480px) {
+  .text-2xl {
+    font-size: 1.25rem;
   }
 
-  .metrics {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .metric {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .alert-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .alert-right {
-    width: 100%;
-    text-align: left;
-    display: flex;
-    justify-content: space-between;
+  .text-3xl {
+    font-size: 1.5rem;
   }
 }
 </style>

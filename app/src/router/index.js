@@ -51,6 +51,12 @@ const routes = [
     meta: { requiresAuth: true, roles: ["Admin", "Manager", "Caretaker"] },
   },
   {
+    path: "/device",
+    name: "Device",
+    component: () => import("@/views/Device.vue"),
+    meta: { requiresAuth: true, roles: ["Admin"] },
+  },
+  {
     path: "/profile",
     name: "Profile",
     component: () => import("@/views/Profile.vue"),
@@ -60,6 +66,12 @@ const routes = [
     path: "/accounts",
     name: "Accounts",
     component: () => import("@/views/Accounts.vue"),
+    meta: { requiresAuth: true, roles: ["Admin"] },
+  },
+  {
+    path: "/system-logs",
+    name: "/systemLogs",
+    component: () => import("@/views/SystemLogs.vue"),
     meta: { requiresAuth: true, roles: ["Admin"] },
   },
   {

@@ -29,14 +29,15 @@ import {
   fetchSignInMethodsForEmail, // ✅ Add this
 } from "firebase/auth";
 
+// 🔥 Firebase Config
 const firebaseConfig = {
-  apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
-  authDomain: process.env.VUE_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.VUE_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.VUE_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.VUE_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.VUE_APP_FIREBASE_APP_ID,
-  measurementId: process.env.VUE_APP_FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyBQM4tdqU98u1DzXlbWMdiLnpx6k-LIcEQ",
+  authDomain: "poultry-d16aa.firebaseapp.com",
+  projectId: "poultry-d16aa",
+  storageBucket: "poultry-d16aa.appspot.com",
+  messagingSenderId: "164374560790",
+  appId: "1:164374560790:web:25384d58258d127a01f537",
+  measurementId: "G-W4ZW4GN1W6",
 };
 
 // ✅ Initialize Firebase

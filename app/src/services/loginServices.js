@@ -1,7 +1,6 @@
 import {
   db,
   doc,
-  getDoc,
   deleteField,
   updateDoc,
   collection,
@@ -11,7 +10,12 @@ import {
   serverTimestamp,
 } from "./firebase";
 import { auth, googleProvider, signInWithPopup, signOut } from "./firebase";
-import { successAlert, errorAlert, infoAlert } from "./alertServices.js";
+import {
+  successAlert,
+  errorAlert,
+  infoAlert,
+  confirmAlert,
+} from "./alertServices.js";
 
 // --- Utility Functions for User Info ---
 const getBrowserInfo = async () => {
@@ -21,8 +25,8 @@ const getBrowserInfo = async () => {
     ]);
     const browserName = brands.brands.find((b) =>
       ["Edge", "Brave", "Chrome", "Firefox", "Safari", "Opera"].some((name) =>
-        b.brand.includes(name)
-      )
+        b.brand.includes(name),
+      ),
     );
     return browserName ? browserName.brand : "Unknown Browser";
   }
@@ -58,6 +62,39 @@ const getUserIP = async () => {
   }
 };
 
+const getGPSLocation = () => {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation not supported"));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { signal: controller.signal },
+          );
+          const data = await res.json();
+          resolve(data.display_name || `Lat: ${latitude}, Long: ${longitude}`);
+        } catch {
+          resolve(`Lat: ${latitude}, Long: ${longitude}`);
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      },
+      (error) => {
+        reject(new Error("Location access denied"));
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+    );
+  });
+};
+
 function generateTempPassword(length = 12) {
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%";
@@ -67,33 +104,6 @@ function generateTempPassword(length = 12) {
   }
   return password;
 }
-
-const getGPSLocation = () => {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) {
-      resolve("Geolocation not supported");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-          );
-          const data = await res.json();
-          resolve(data.display_name || `Lat: ${latitude}, Long: ${longitude}`);
-        } catch {
-          resolve(`Lat: ${latitude}, Long: ${longitude}`);
-        }
-      },
-      () => {
-        resolve("Location access denied");
-      }
-    );
-  });
-};
 
 function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
@@ -114,6 +124,25 @@ async function hashPassword(password, salt) {
   return bufferToHex(hashBuffer);
 }
 
+async function sendEmail(to, subject, { title, message, text, footerNote }) {
+  try {
+    await fetch("https://email-poultry-backend.onrender.com/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to,
+        subject,
+        title,
+        message,
+        text,
+        footerNote,
+      }),
+    });
+  } catch (error) {
+    console.error("📧 Failed to send email:", error);
+  }
+}
+
 // --- Main loginService Object ---
 const loginService = {
   saveCredentials(email) {
@@ -132,7 +161,7 @@ const loginService = {
 
       if (querySnapshot.empty) {
         errorAlert(
-          `Sorry, we couldn't find an account associated with "${email}".`
+          `Sorry, we couldn't find an account associated with "${email}".`,
         );
         return null;
       }
@@ -157,6 +186,7 @@ const loginService = {
     }
   },
 
+  ///
   async loginUser(email, enteredPassword) {
     try {
       const userCheck = await this.checkUser(email);
@@ -166,31 +196,26 @@ const loginService = {
       // TEMP PASSWORD LOGIN FLOW
       if (userData.tempPassword) {
         const createdAt = userData.tempPasswordCreatedAt;
-        const tempType = userData.tempPasswordFor; // "new_account" or "reset_password"
+        const tempType = userData.tempPasswordFor;
         if (createdAt && tempType) {
           const createdTime = new Date(createdAt).getTime();
           const now = Date.now();
           const diffMins = (now - createdTime) / 60000;
-
-          // Check expiry based on type
           let isExpired = false;
           if (tempType === "new_account" && diffMins > 3 * 24 * 60) {
-            // > 4320 mins = 3 days
             isExpired = true;
           } else if (tempType === "reset_password" && diffMins > 5) {
             isExpired = true;
           }
-
           if (isExpired) {
             errorAlert(
               tempType === "new_account"
                 ? "Temporary password expired. Please contact admin to recreate your account credentials."
-                : "Temporary password reset expired. Please request a new password reset."
+                : "Temporary password reset expired. Please request a new password reset.",
             );
             return { success: false };
           }
         }
-
         if (enteredPassword !== userData.tempPassword) {
           errorAlert("Incorrect temporary password.");
           return { success: false };
@@ -216,7 +241,6 @@ const loginService = {
         return { success: false };
       }
 
-      // MUST CHANGE PASSWORD FLAG CHECK
       if (userData.mustChangePassword === true) {
         infoAlert("Your account requires a password change before continuing.");
         return {
@@ -226,17 +250,69 @@ const loginService = {
         };
       }
 
-      // SUCCESSFUL LOGIN — UPDATE INFO
+      // 🚫 ENFORCE GPS LOCATION
+      let location;
+      let ip;
+      let browser;
+      try {
+        [location, ip, browser] = await Promise.all([
+          getGPSLocation(),
+          getUserIP(),
+          getBrowserInfo(),
+        ]);
+      } catch {
+        errorAlert("Location access is required to login. Please enable GPS.");
+        return { success: false };
+      }
+
+      // ✅ Proceed with login logging
       const userRef = doc(db, "accounts", userKey);
       const lastLogin = new Date().toISOString();
+      const os = getOSInfo();
 
       await updateDoc(userRef, {
         status: "Active",
         lastLogin,
-        browser: await getBrowserInfo(),
-        os: getOSInfo(),
-        ip: await getUserIP(),
-        location: await getGPSLocation(),
+        browser,
+        os,
+        ip,
+        location,
+      });
+
+      const createdAt = new Date().toLocaleString("en-US", {
+        timeZone: "Asia/Manila",
+        dateStyle: "long",
+        timeStyle: "medium",
+      });
+
+      void sendEmail(userData.email, "Login Notification", {
+        title: "Successful Login Notification",
+        message: `Hi ${userData.name || "User"},
+  
+  You have successfully logged in to the Smart Poultry App.
+  
+  📍 **Login Details**
+  - **Browser:** ${browser}
+  - **IP Address:** ${ip}
+  - **Location:** ${location}
+  - **Email:** ${userData.email}
+  - **Account Created At:** ${createdAt}
+  - **Last Login:** ${lastLogin}
+  
+  If this wasn't you, please secure your account immediately.
+  
+  Thank you for using Smart Poultry App.`,
+        text: `
+  Login Details:
+  
+  - Browser: ${browser}
+  - IP Address: ${ip}
+  - Location: ${location}
+  - Email: ${userData.email}
+  - Account Created At: ${createdAt}
+  - Last Login: ${lastLogin}
+  `,
+        footerNote: "Smart Poultry App — Automated System Notification",
       });
 
       localStorage.setItem("isAuthenticated", "true");
@@ -247,7 +323,7 @@ const loginService = {
           email: userData.email,
           role: userData.role,
           name: userData.name || "",
-        })
+        }),
       );
 
       return {
@@ -266,11 +342,11 @@ const loginService = {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const userEmail = result.user.email;
+
       const userCheck = await this.checkUser(userEmail);
       if (!userCheck) return { success: false };
       const { userKey, userData } = userCheck;
 
-      // If must change password (enforce flow consistency)
       if (userData.mustChangePassword === true) {
         infoAlert("Your account requires a password change before continuing.");
         return {
@@ -280,19 +356,69 @@ const loginService = {
         };
       }
 
-      // Success login update
+      // 🚫 ENFORCE GPS LOCATION
+      let location;
+      let ip;
+      let browser;
+      try {
+        [location, ip, browser] = await Promise.all([
+          getGPSLocation(),
+          getUserIP(),
+          getBrowserInfo(),
+        ]);
+      } catch {
+        errorAlert("Location access is required to login. Please enable GPS.");
+        return { success: false };
+      }
+
       const userRef = doc(db, "accounts", userKey);
-      const lastLogin = new Date().toLocaleString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true,
+      const lastLogin = new Date().toISOString();
+      const os = getOSInfo();
+
+      await updateDoc(userRef, {
+        status: "Active",
+        lastLogin,
+        browser,
+        os,
+        ip,
+        location,
       });
 
-      await updateDoc(userRef, { status: "Active", lastLogin });
+      const createdAt = new Date().toLocaleString("en-US", {
+        timeZone: "Asia/Manila",
+        dateStyle: "long",
+        timeStyle: "medium",
+      });
+
+      void sendEmail(userData.email, "Login Notification", {
+        title: "Successful Login Notification",
+        message: `Hi ${userData.name || "User"},
+  
+  You have successfully logged in to the Smart Poultry App.
+  
+  📍 **Login Details**
+  - **Browser:** ${browser}
+  - **IP Address:** ${ip}
+  - **Location:** ${location}
+  - **Email:** ${userData.email}
+  - **Account Created At:** ${createdAt}
+  - **Last Login:** ${lastLogin}
+  
+  If this wasn't you, please secure your account immediately.
+  
+  Thank you for using Smart Poultry App.`,
+        text: `
+  Login Details:
+  
+  - Browser: ${browser}
+  - IP Address: ${ip}
+  - Location: ${location}
+  - Email: ${userData.email}
+  - Account Created At: ${createdAt}
+  - Last Login: ${lastLogin}
+  `,
+        footerNote: "Smart Poultry App — Automated System Notification",
+      });
 
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userKey", userKey);
@@ -302,7 +428,7 @@ const loginService = {
           email: userData.email,
           role: userData.role,
           name: userData.name || "",
-        })
+        }),
       );
 
       successAlert("Google login was successful!");
@@ -365,7 +491,7 @@ const loginService = {
 
       if (diffMinutes !== null && diffMinutes < 5) {
         errorAlert(
-          "⚠️ A temporary password was already sent. Please wait before requesting another."
+          "⚠️ A temporary password was already sent. Please wait before requesting another.",
         );
         return;
       }
@@ -398,7 +524,7 @@ const loginService = {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(emailPayload),
-        }
+        },
       );
 
       if (!res.ok) {
@@ -415,6 +541,23 @@ const loginService = {
   },
 
   async logoutUser(userKey, preserveEmail = false) {
+    const confirmed = await confirmAlert(
+      "Logout?",
+      "You will be logged out of your account.",
+      "Yes, Logout",
+      "Cancel",
+      {
+        icon: "warning",
+        confirmButtonColor: "#d33",
+      },
+    );
+
+    // Proper check for cancel
+    if (!confirmed.isConfirmed) {
+      console.log("❎ Logout cancelled by user.");
+      return { success: false };
+    }
+
     try {
       await signOut(auth);
 

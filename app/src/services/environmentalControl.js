@@ -1,5 +1,6 @@
 import { doc, getDoc, setDoc, db } from "./firebase";
 import { successAlert, errorAlert } from "./alertServices.js";
+import logs from "./logsServices.js";
 
 const environment = {
   // ✅ Set Temperature Goal
@@ -7,6 +8,10 @@ const environment = {
     try {
       const refTempGoal = doc(db, "poultry_DB", "environmental_monitoring");
       await setDoc(refTempGoal, { temp_goal: newTempGoal }, { merge: true });
+      await logs.recordLogs({
+        action: "CONFIG",
+        description: `Set new temperature goal: ${newTempGoal}`,
+      });
 
       successAlert(
         "Success!",
@@ -22,7 +27,7 @@ const environment = {
     try {
       const refTempGoal = doc(db, "poultry_DB", "environmental_monitoring");
       const snapshot = await getDoc(refTempGoal);
-      return snapshot.exists() ? snapshot.data().temp_goal ?? 0 : 0; // Default: 0°C
+      return snapshot.exists() ? snapshot.data().temp_goal ?? 0 : 0;
     } catch (error) {
       errorAlert("Error!", `Error getting temperature goal: ${error}`);
       return 0;
@@ -39,6 +44,11 @@ const environment = {
         { merge: true }
       );
 
+      await logs.recordLogs({
+        action: "CONFIG",
+        description: `Set new humidity goal: ${newHumidityGoal}`,
+      });
+
       successAlert(
         "Success!",
         `Humidity goal updated successfully: ${newHumidityGoal}`
@@ -53,11 +63,42 @@ const environment = {
     try {
       const refHumidityGoal = doc(db, "poultry_DB", "environmental_monitoring");
       const snapshot = await getDoc(refHumidityGoal);
-
-      return snapshot.exists() ? snapshot.data().hum_goal ?? 0 : 0; // Default: 50%
+      return snapshot.exists() ? snapshot.data().hum_goal ?? 0 : 50;
     } catch (error) {
       errorAlert("Error!", `Error getting humidity goal: ${error}`);
       return 50;
+    }
+  },
+
+  // ✅ Set Air Quality Goal
+  async setAirQualityGoal(newAirGoal) {
+    try {
+      const refAirGoal = doc(db, "poultry_DB", "environmental_monitoring");
+      await setDoc(refAirGoal, { air_goal: newAirGoal }, { merge: true });
+
+      await logs.recordLogs({
+        action: "CONFIG",
+        description: `Set new air quality goal: ${newAirGoal}`,
+      });
+
+      successAlert(
+        "Success!",
+        `Air quality goal updated successfully: ${newAirGoal}`
+      );
+    } catch (error) {
+      errorAlert("Error!", `Error updating air quality goal: ${error}`);
+    }
+  },
+
+  // ✅ Get Air Quality Goal
+  async getAirQualityGoal() {
+    try {
+      const refAirGoal = doc(db, "poultry_DB", "environmental_monitoring");
+      const snapshot = await getDoc(refAirGoal);
+      return snapshot.exists() ? snapshot.data().air_goal ?? 100 : 100;
+    } catch (error) {
+      errorAlert("Error!", `Error getting air quality goal: ${error}`);
+      return 100;
     }
   },
 
@@ -69,9 +110,9 @@ const environment = {
 
       if (snapshot.exists()) {
         const bulbValue = snapshot.data().bulb;
-        return bulbValue === "true"; // Convert string to boolean
+        return bulbValue === "true";
       } else {
-        return false; // Default: Off
+        return false;
       }
     } catch (error) {
       errorAlert("Error!", `Error getting heating lamp status: ${error}`);
@@ -79,25 +120,6 @@ const environment = {
     }
   },
 
-  // ✅ Set Ventilation Settings
-  async setVentilationSettings(fanStates) {
-    try {
-      const fansRef = doc(db, "poultry_DB", "actuators");
-      await setDoc(fansRef, fanStates, { merge: true });
-
-      successAlert(
-        "Success!",
-        `Ventilation settings updated successfully: ${JSON.stringify(
-          fanStates
-        )}`
-      );
-    } catch (error) {
-      errorAlert("Error!", `Error updating ventilation settings: ${error}`);
-      throw error;
-    }
-  },
-
-  // ✅ Get Exhaust Status
   async getExhaustStatus() {
     try {
       const exhaustRef = doc(db, "poultry_DB", "actuators");
@@ -105,18 +127,22 @@ const environment = {
 
       if (snapshot.exists()) {
         const exhaustData = snapshot.data();
+        const exhaustStatus = {};
 
-        return {
-          ex1: exhaustData?.ex1 === "true",
-          ex2: exhaustData?.ex2 === "true",
-        };
+        for (const key in exhaustData) {
+          if (key.startsWith("ex")) {
+            exhaustStatus[key] = exhaustData[key] === "true";
+          }
+        }
+
+        return exhaustStatus;
       } else {
         errorAlert("Warning!", "No exhaust status found in Firestore.");
-        return { ex1: false, ex2: false }; // Default values
+        return {};
       }
     } catch (error) {
       errorAlert("Error!", `Error fetching exhaust status: ${error}`);
-      return { ex1: false, ex2: false };
+      return {};
     }
   },
 };

@@ -17,4 +17,5 @@ module.exports = defineConfig({
     },
     allowedHosts: "all", // ⚠️ Can REMOVE this safely (optional)
   },
+  publicPath: "/",
 });

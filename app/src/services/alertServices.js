@@ -119,22 +119,21 @@ export function infoAlert(title = "Info", text = "", options = {}) {
     ...options,
   });
 }
-
 export function confirmAlert(
   title = "Are you sure?",
   text = "This action cannot be undone.",
-  confirmText = "Yes",
+  confirmText = "Yes, continue",
   cancelText = "Cancel",
   options = {}
 ) {
   return Swal.fire({
-    icon: "question",
+    icon: "warning",
     title,
     text,
     showCancelButton: true,
     confirmButtonText: confirmText,
     cancelButtonText: cancelText,
-    confirmButtonColor: "#4CAF50",
+    confirmButtonColor: "#d33", // red warning color
     cancelButtonColor: "#E0E0E0",
     showClass: showAnim,
     hideClass: hideAnim,

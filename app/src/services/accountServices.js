@@ -11,7 +11,8 @@ import {
   deleteDoc,
 } from "./firebase";
 // Import your alert utilities
-import { successAlert, errorAlert } from "./alertServices.js"; // adjust path as needed
+import { successAlert, errorAlert } from "./alertServices.js";
+import logs from "./logsServices.js";
 
 const accounts = {
   // ADD Account
@@ -74,6 +75,11 @@ const accounts = {
         body: JSON.stringify(emailPayload),
       });
 
+      await logs.recordLogs({
+        action: "CREATE",
+        description: `Created new account for ${accountData.email}`,
+      });
+
       successAlert(
         `Account successfully added!\nTemp password sent to: ${accountData.email}`
       );
@@ -101,6 +107,12 @@ const accounts = {
     try {
       const accountRef = doc(db, "accounts", accountId);
       await updateDoc(accountRef, accountData);
+
+      await logs.recordLogs({
+        action: "UPDATE",
+        description: `Updated account of ${accountData.email}`,
+      });
+
       successAlert("Account successfully updated!");
     } catch (error) {
       errorAlert("Error updating account: " + error.message);
@@ -108,11 +120,27 @@ const accounts = {
     }
   },
 
-  // DELETE Account
   async deleteAccount(accountId) {
     try {
       const accountRef = doc(db, "accounts", accountId);
+
+      // Get account details first
+      const accountSnap = await getDoc(accountRef);
+      if (!accountSnap.exists()) {
+        throw new Error("Account not found.");
+      }
+
+      const accountData = accountSnap.data();
+      const userEmail = accountData.email || "Unknown Email";
+
+      // Proceed with deletion
       await deleteDoc(accountRef);
+
+      await logs.recordLogs({
+        action: "DELETE",
+        description: `Deleted account with email: ${userEmail}`,
+      });
+
       successAlert("Account successfully deleted!");
     } catch (error) {
       errorAlert("Error deleting account: " + error.message);
