@@ -275,9 +275,10 @@ const loginService = {
         timeStyle: "medium",
       });
 
-      void sendEmail(userData.email, "Login Notification", {
-        title: "Successful Login Notification",
-        message: `Hi ${userData.name || "User"},
+      try {
+        await sendEmail(userData.email, "Login Notification", {
+          title: "Successful Login Notification",
+          message: `Hi ${userData.name || "User"},
   
   You have successfully logged in to the Smart Poultry App.
   
@@ -292,7 +293,7 @@ const loginService = {
   If this wasn't you, please secure your account immediately.
   
   Thank you for using Smart Poultry App.`,
-        text: `
+          text: `
   Login Details:
   
   - Browser: ${browser}
@@ -302,8 +303,14 @@ const loginService = {
   - Account Created At: ${createdAt}
   - Last Login: ${lastLogin}
   `,
-        footerNote: "Smart Poultry App — Automated System Notification",
-      });
+          footerNote: "Smart Poultry App — Automated System Notification",
+        });
+      } catch (emailError) {
+        console.warn(
+          "Login succeeded, but email notification failed:",
+          emailError,
+        );
+      }
 
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userKey", userKey);
@@ -380,9 +387,10 @@ const loginService = {
         timeStyle: "medium",
       });
 
-      void sendEmail(userData.email, "Login Notification", {
-        title: "Successful Login Notification",
-        message: `Hi ${userData.name || "User"},
+      try {
+        await sendEmail(userData.email, "Login Notification", {
+          title: "Successful Login Notification",
+          message: `Hi ${userData.name || "User"},
   
   You have successfully logged in to the Smart Poultry App.
   
@@ -397,7 +405,7 @@ const loginService = {
   If this wasn't you, please secure your account immediately.
   
   Thank you for using Smart Poultry App.`,
-        text: `
+          text: `
   Login Details:
   
   - Browser: ${browser}
@@ -407,8 +415,14 @@ const loginService = {
   - Account Created At: ${createdAt}
   - Last Login: ${lastLogin}
   `,
-        footerNote: "Smart Poultry App — Automated System Notification",
-      });
+          footerNote: "Smart Poultry App — Automated System Notification",
+        });
+      } catch (emailError) {
+        console.warn(
+          "Google login succeeded, but email notification failed:",
+          emailError,
+        );
+      }
 
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userKey", userKey);
